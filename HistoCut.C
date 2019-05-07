@@ -31,7 +31,7 @@ void HistoCut(Int_t CentralityClasses, Int_t CE){
 	Double_t integral = FitHisto->Integral(2,bins);
 	cout<<"integral="<<integral<<endl;
 
-	TFile *f = new TFile("HistoCutResult.root", "recreate");
+	TFile *f = new TFile("HistoCutResult_RPC.root", "recreate");
 	TH1F* ResultHisto[CentralityClasses];
 	for (int i = 0; i < CentralityClasses; i++)   ResultHisto[i] = new TH1F(Form("CentralityClass_Fit %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), Form(";%s;counts", CentralityEstimatorName[CE].Data()),bins, min, max);
 	Int_t j=1;
@@ -83,9 +83,33 @@ void HistoCut(Int_t CentralityClasses, Int_t CE){
 				}
 			}
    		}
-
 	
+	TTree *Borders=new TTree(Form("Borders_%s", CentralityEstimatorName[CE].Data()), Form("Borders_%s", CentralityEstimatorName[CE].Data()));
+	Int_t Ncc, BIN, MinBorder, MaxBorder;
+	Float_t MinPercent, MaxPercent;
+	Borders -> Branch("Ncc", &Ncc);
+	Borders -> Branch("MinPercent", &MinPercent);
+	Borders -> Branch("MaxPercent", &MaxPercent);
+	Borders -> Branch("MinBorder", &MinBorder);
+	Borders -> Branch("MaxBorder", &MaxBorder);
 
+	j=0;
+	for (Int_t i=1;i<=CentralityClasses;i++) {
+		cout<<i<<endl;
+		Ncc=i;
+		Int_t l=2;
+        	while ((ResultHisto[j]->GetBinContent(l))<=0 && l<bins) l++;
+		MinPercent=(j)*100/CentralityClasses; 
+		MinBorder=ResultHisto[j]->GetBinCenter(l); 
+		BIN=l;
+		for (Int_t q=BIN;q<=bins;q++) {
+			if ((ResultHisto[j]->GetBinContent(q))>0) {MaxPercent=(j+1)*100/CentralityClasses; MaxBorder=ResultHisto[j]->GetBinCenter(q); break;};
+			if (q==bins) {MaxPercent=(j+1)*100/CentralityClasses; MaxBorder=ResultHisto[j]->GetBinCenter(q);};
+			}
+		Borders -> Fill();
+		j++;
+   		}
+cout<<"FUCK"<<endl;
 	TCanvas* c1 = new TCanvas("HistoCutResult","HistoCutResult");
 	TLegend legend1(0.1, 0.2, 0.3, 0.4, "HistoCutResult");
 	for (int i = 0; i < CentralityClasses; i++) legend1.AddEntry(ResultHisto[i], Form("CentralityClass %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses));
@@ -106,6 +130,8 @@ void HistoCut(Int_t CentralityClasses, Int_t CE){
 	c2->Write();
 	for (int i = 0; i < CentralityClasses; i++) CentralityHisto[i] -> Write();
 	Centrality_vs_Multiplisity -> Write();
+
+	Borders -> Write();
 	
 
 	f->Close();

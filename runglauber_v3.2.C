@@ -1,4 +1,4 @@
-/*
+/*F
  $Id: runglauber.C 186 2019-01-13 17:33:43Z loizides $
  -------------------------------------------------------------------------------------
  Latest documentation: https://arxiv.org/abs/1710.07098
@@ -117,6 +117,7 @@ void runAndSaveNtuple(const Int_t n,
 		      const Double_t omega    = -1,
                       const Double_t noded    = -1,
                       const char *fname       = 0);
+
 
 //---------------------------------------------------------------------------------
 void runAndSaveNucleons(const Int_t n,                    
@@ -273,6 +274,7 @@ class TGlauNucleus : public TNamed
     using      TObject::Draw;
     void       Draw(Double_t xs, Int_t colp, Int_t cols);
     Double_t   GetA()             const {return fA;}
+    Int_t      GetZ()             const {return fZ;}
     TF1*       GetFunc1()         const {return GetFuncP();}
     TF1*       GetFunc2()         const {return GetFuncN();}
     TF2*       GetFunc3()         const {return GetFuncDef();}
@@ -369,9 +371,11 @@ class TGlauberMC : public TNamed
         ClassDef(TGlauberMC::Event, 1)
     };
 
-  protected:
+  public:
     TGlauNucleus  fANucleus;       //Nucleus A
     TGlauNucleus  fBNucleus;       //Nucleus B
+
+  protected:
     Double_t      fXSect;          //Nucleon-nucleon cross section
     Double_t      fXSectOmega;     //StdDev of Nucleon-nucleon cross section
     Double_t      fXSectLambda;    //Jacobian from tot to inelastic (Strikman)
@@ -475,6 +479,12 @@ class TGlauberMC : public TNamed
 };
 
 //---------------------------------------------------------------------------------
+TH1F* SetBDhist(double p, float Nspec, int fZ);  // for HADES_FW
+
+//---------------------------------------------------------------------------------
+double BD(float n, double p, float Nspec);          // for HADES_FW
+//---------------------------------------------------------------------------------
+
 TF1 *getNNProf(Double_t snn, Double_t omega, Double_t G) 
 { // NN collisoin profile from https://arxiv.org/abs/1307.0636
   if ((omega<0) || (omega>1))
@@ -521,8 +531,88 @@ void runAndSaveNtuple(const Int_t n,
   mcg->Run(n);
   TFile out(name,"recreate",name,9);
   TNtuple  *nt=mcg->GetNtuple();
+/*  TTree *HADES_FW=new TTree("HADES_FW", "HADES_FW");
+  Float_t NprotonsA, NprotonsB, NneutronsA, NneutronsB, NpartA, NpartB, NspecA, NspecB;
+  Int_t event;
+  TH1F *htemp;
+  HADES_FW->Branch("NspecA", &NspecA);
+  HADES_FW->Branch("NspecB", &NspecB);
+  HADES_FW->Branch("NprotonsA", &NprotonsA);
+  HADES_FW->Branch("NprotonsB", &NprotonsB);
+  HADES_FW->Branch("NneutronsA", &NneutronsA);
+  HADES_FW->Branch("NneutronsB", &NneutronsB);
+  HADES_FW->Branch("event", &event);
+  Int_t entries=(Int_t)nt->GetEntries();
+  cout<<entries<<endl;
+  nt->SetBranchAddress("NpartA", &NpartA);
+  nt->SetBranchAddress("NpartB", &NpartB);
+  double fNA=((mcg->fANucleus).GetN());
+  double fNB=((mcg->fBNucleus).GetN());
+  double fZA=((mcg->fANucleus).GetZ());
+  double fZB=((mcg->fBNucleus).GetZ());
+  double pA=fZA/fNA;
+  double pB=fZB/fNB;
+  for (int i = 0; i < entries; i++) {
+    nt->GetEntry(i);
+    event = i;
+    cout<<i<<endl;
+    NspecA=((mcg->fANucleus).GetN())-NpartA;
+    NspecB=((mcg->fBNucleus).GetN())-NpartB;
+    htemp=SetBDhist(pA, NspecA, ((mcg->fANucleus).GetZ()));
+    NprotonsA=(int(SetBDhist(pA, NspecA, ((mcg->fANucleus).GetZ()))->GetRandom()));
+    NneutronsA=NspecA-NprotonsA;
+    htemp=SetBDhist(pB, NspecB, ((mcg->fBNucleus).GetZ()));
+    NprotonsB=(int(SetBDhist(pB, NspecB, ((mcg->fBNucleus).GetZ()))->GetRandom()));
+    NneutronsB=NspecB-NprotonsB;
+    HADES_FW->Fill();
+    }*/
   nt->Write();
+//  HADES_FW->Write();
   out.Close();
+}
+
+//---------------------------------------------------------------------------------
+/**
+ * Populates histogram BD with values of binomial distribution for HADES_FW
+ * @param p argument
+ * @param Nspec argument of amount of spectators
+ */
+TH1F* SetBDhist(double p, float Nspec, int fZ)
+{
+    // Interface for TH1F.
+    const int nBins = Nspec+1;
+    
+    TH1F *BDHisto =new TH1F ("BD_Histo", "", nBins, 0, nBins);
+    BDHisto->SetName("BD");
+    
+    for (int i=0; i<nBins; ++i) 
+    {
+        double val = BD(i, p, Nspec);
+//	std::cout<<"i="<<i<<"  val="<<val<<std::endl;
+        if (i<=fZ) BDHisto->SetBinContent(i+1, val);
+//        std::cout << "val " << val << std::endl;    
+    }
+    BDHisto->Scale(1/(BDHisto->Integral(1,nBins)));
+//    std::cout << "S=" << fFWHisto.Integral(1,nBins) << std::endl;
+    return BDHisto; 
+}
+
+//---------------------------------------------------------------------------------
+/**
+ * Binomial Distribution for HADES_FW
+ * @param n argument
+ * @param p argument
+ * @param Nspec argument of amount of spectators
+ * @return BD for a given parameters
+ */
+double BD(float n, double p, float Nspec)
+{
+    // Compute BD.
+    double F  = TMath::Binomial(Nspec, n) * TMath::Power(p, n) * TMath::Power((1-p), (Nspec-n));
+//    std::cout<<"1"<<"  ="<<TMath::Binomial(Nancestors(f), n)<<std::endl;
+//    std::cout<<"2"<<"  ="<<TMath::Power(k, n)<<std::endl;
+//    std::cout<<"3"<<"  ="<<TMath::Power((1-k), (Nancestors(f)-n))<<std::endl;
+    return F;
 }
 
 //---------------------------------------------------------------------------------
