@@ -11,7 +11,7 @@
 ClassImp(Glauber::Fitter)
 
 // -----   Default constructor   -------------------------------------------
-Glauber::Fitter::Fitter(std::unique_ptr<TTree> tree) 
+Glauber::Fitter::Fitter(std::unique_ptr<TTree> tree, TString fmode) 
 {
     fSimTree = std::move(tree);    
     std::cout << fSimTree->GetEntries() << std::endl;
@@ -21,12 +21,18 @@ Glauber::Fitter::Fitter(std::unique_ptr<TTree> tree)
         exit(EXIT_FAILURE);
     }
     
-    fSimTree->SetBranchAddress("Npart",  &fNpart);
-    fSimTree->SetBranchAddress("NpartA", &fNpartA);
-    fSimTree->SetBranchAddress("Ncoll",  &fNcoll);
+    if (fmode=="PSD") {
+	fSimTree->SetBranchAddress("NprotonsA",  &fNprotonsA);
+    	fSimTree->SetBranchAddress("NspecA", &fNspecA);
+    	}
+    else {	
+	fSimTree->SetBranchAddress("Npart",  &fNpart);
+    	fSimTree->SetBranchAddress("NpartA", &fNpartA);
+    	fSimTree->SetBranchAddress("Ncoll",  &fNcoll);
+	}
 }
 
-void Glauber::Fitter::Init(int nEntries)
+void Glauber::Fitter::Init(int nEntries, TString fmode)
 {
     if ( nEntries < 0 || nEntries > fSimTree->GetEntries() ){
         std::cout << "Init: *** ERROR - number of entries < 0 or less that number of entries in input tree" << std::endl;
@@ -34,22 +40,39 @@ void Glauber::Fitter::Init(int nEntries)
         exit(EXIT_FAILURE);
     }
     
-    const int NpartMax  = int (fSimTree->GetMaximum("Npart") );
-    const int NpartAMax = int (fSimTree->GetMaximum("NpartA") );
-    const int NcollMax  = int (fSimTree->GetMaximum("Ncoll") );
-    
-    fNpartHisto  = TH1F ("fNpartHisto",  "Npart",  NpartMax/fBinSize,  0, NpartMax );
-    fNpartAHisto = TH1F ("fNpartAHisto", "NpartA", NpartAMax/fBinSize, 0, NpartAMax );
-    fNcollHisto  = TH1F ("fNcollHisto",  "Ncoll",  NcollMax/fBinSize,  0, NcollMax );
-    
-    for (int i=0; i<nEntries; i++)
-    {
-        fSimTree->GetEntry(i);
-        fNcollHisto.Fill(fNcoll);
-        fNpartHisto.Fill(fNpart);
-	fNpartAHisto.Fill(fNpartA);
-    }
-    std::cout << fSimTree->GetEntries() << std::endl;
+    if (fmode=="PSD") {
+	const int NprotonsAMax  = int (fSimTree->GetMaximum("NprotonsA") );
+    	const int NspecAMax = int (fSimTree->GetMaximum("NspecA") );
+    	
+    	fNprotonsAHisto  = TH1F ("fNprotonsAHisto",  "NprotonsA",  NprotonsAMax/fBinSize,  0, NprotonsAMax );
+    	fNspecAHisto = TH1F ("fNspecAHisto", "NspecA", NspecAMax/fBinSize, 0, NspecAMax );
+    	
+    	for (int i=0; i<nEntries; i++)
+    		{
+        	fSimTree->GetEntry(i);
+        	fNprotonsAHisto.Fill(fNprotonsA);
+        	fNspecAHisto.Fill(fNspecA);
+    		}
+    	std::cout << fSimTree->GetEntries() << std::endl;
+	}
+    else {
+    	const int NpartMax  = int (fSimTree->GetMaximum("Npart") );
+    	const int NpartAMax = int (fSimTree->GetMaximum("NpartA") );
+    	const int NcollMax  = int (fSimTree->GetMaximum("Ncoll") );
+    	
+    	fNpartHisto  = TH1F ("fNpartHisto",  "Npart",  NpartMax/fBinSize,  0, NpartMax );
+    	fNpartAHisto = TH1F ("fNpartAHisto", "NpartA", NpartAMax/fBinSize, 0, NpartAMax );
+    	fNcollHisto  = TH1F ("fNcollHisto",  "Ncoll",  NcollMax/fBinSize,  0, NcollMax );
+    	
+    	for (int i=0; i<nEntries; i++)
+    		{
+        	fSimTree->GetEntry(i);
+        	fNcollHisto.Fill(fNcoll);
+        	fNpartHisto.Fill(fNpart);
+		fNpartAHisto.Fill(fNpartA);
+    		}
+    	std::cout << fSimTree->GetEntries() << std::endl;
+	}
 
     fNbins = fDataHisto.GetNbinsX();
 
@@ -70,7 +93,7 @@ void Glauber::Fitter::Init(int nEntries)
 float Glauber::Fitter::Nancestors(float f) const
 {
     if       (fMode == "Default")    return f*fNpart + (1-f)*fNcoll;
-    else if  (fMode == "PSD")        return f - fNpartA;
+    else if  (fMode == "PSD")        return fNprotonsA;
     else if  (fMode == "Npart")      return TMath::Power(fNpart, f); 
     else if  (fMode == "Ncoll")      return TMath::Power(fNcoll, f);
     
@@ -83,7 +106,7 @@ float Glauber::Fitter::NancestorsMax(float f) const
     const int NcollMax = fNcollHisto.GetXaxis()->GetXmax() ; //TODO 
     
     if       (fMode == "Default")    return f*NpartMax + (1-f)*NcollMax;
-    else if  (fMode == "PSD")        return 2*fA;
+    else if  (fMode == "PSD")        return fNprotonsA;
     else if  (fMode == "Npart")      return TMath::Power(NpartMax, f); 
     else if  (fMode == "Ncoll")      return TMath::Power(NcollMax, f);
     
@@ -111,7 +134,7 @@ void Glauber::Fitter::SetGlauberFitHisto (float f, float mu, float k, int n, flo
         float nHits {0.};
         for (int j=0; j<Na; j++){
 //            nHits += ((1-alpha*fNpart*fNpart)*int(htemp->GetRandom()));
-	    if (gRandom->Rndm() < (1-alpha*fNpart*fNpart)) nHits += (int(htemp->GetRandom()));
+	      nHits += (int(htemp->GetRandom()));
         }
         fGlauberFitHisto.Fill(nHits);
     }
@@ -235,7 +258,7 @@ float Glauber::Fitter::FitGlauber (float *par, Float_t f0, Float_t f1, Int_t k0,
     tree->Branch("sigma",&sigma,"sigma/F");   
 
     int n=1;
-    for (float i=f0; i<=f1; i=i+0.010000)
+    for (float i=f0; i<=f1; i=i+0.1000000)
     {
 	    f=i;
 	    for (int j=k0; j<=k1; j++)
@@ -304,7 +327,7 @@ float Glauber::Fitter::GetChi2 () const
 }
 
 /**
- * Popuates histogram nbd_<mean>_<k> with values of NBD
+ * Populates histogram nbd_<mean>_<k> with values of NBD
  * @param mu
  * @param k
  */
@@ -387,7 +410,7 @@ std::unique_ptr<TH1F> Glauber::Fitter::GetModelHisto (const float range[2], TStr
         float nHits{0.};
         for (int j=0; j<Na; ++j){
 //            nHits += ((1-alpha*fNpart*fNpart)*(int)fNbdHisto.GetRandom());
-	    if (gRandom->Rndm() < (1-alpha*fNpart*fNpart)) nHits += ((int)(fNbdHisto.GetRandom()));
+	      nHits += ((int)(fNbdHisto.GetRandom()));
         }
         
         if ( nHits > range[0] && nHits < range[1] ){
@@ -400,6 +423,9 @@ std::unique_ptr<TH1F> Glauber::Fitter::GetModelHisto (const float range[2], TStr
     
 }
 
+
+/*
+
 /**
  * Find the best match
  *
@@ -408,7 +434,7 @@ std::unique_ptr<TH1F> Glauber::Fitter::GetModelHisto (const float range[2], TStr
  * @param k0 lower search edge for probability of finding a proton multiplied by 10
  * @param k1 upper search edge for probability of finding a proton multiplied by 10
  * @param nEvents
- */
+ 
 float Glauber::Fitter::FitFW (float *par, Float_t f0, Float_t f1, Int_t k0,  Int_t k1, Int_t nEvents)
 {
     float f_fit{-1};
@@ -487,15 +513,15 @@ float Glauber::Fitter::FitFW (float *par, Float_t f0, Float_t f1, Int_t k0,  Int
  * @param k parameter of binominal distribution for FW
  * @param nEvents
  * @param nIter
- */
+ 
 void Glauber::Fitter::FindMuFWGoldenSection (float *mu, float *chi2, float mu_min, float mu_max, float f, float k, int nEvents, int nIter, int n)
 {
     const float phi {(1+TMath::Sqrt(5))/2};
 
-    /* left */
+    /* left 
     float mu_1 = mu_max - (mu_max-mu_min)/phi;
 
-    /* right */
+    /* right 
     float mu_2 = mu_min + (mu_max-mu_min)/phi;
     
     SetGlauberFitHistoFW (f, mu_1, k, nEvents);
@@ -528,16 +554,16 @@ void Glauber::Fitter::FindMuFWGoldenSection (float *mu, float *chi2, float mu_mi
         std::cout << "n = " << n+j << " f = "  << f << " k = " << k << " mu1 = " << mu_1 << " mu2 = " << mu_2 << " chi2_mu1 = " << chi2_mu1  << " chi2_mu2 = " << chi2_mu2 << std::endl;
     }
 
-    /* take min(mu) */
+    /* take min(mu) 
     *mu = (chi2_mu1 < chi2_mu2) ? mu_1 : mu_2;
-    /* take min(chi2) */
+    /* take min(chi2) 
     *chi2 = (chi2_mu1 < chi2_mu2) ? chi2_mu1 : chi2_mu2;
 }
 
 /*
  * take Glauber MC data from fSimTree
  * Populate fGlauberFitHisto with number of protons in Na
- */
+
 void Glauber::Fitter::SetGlauberFitHistoFW (float f, float mu, float k, int n, float alpha, Bool_t Norm2Data)
 {    
     fGlauberFitHisto = TH1F("glaub", "", fNbins*1.3, 0, 1.3*fMaxValue);
@@ -565,7 +591,7 @@ void Glauber::Fitter::SetGlauberFitHistoFW (float f, float mu, float k, int n, f
  * Populates histogram FW_<mean>_<k> with values of binomial distribution for FW
  * @param mu
  * @param k
- */
+ 
 void Glauber::Fitter::SetFWhist(float mu, float k, float f)
 {
     // Interface for TH1F.
@@ -591,7 +617,7 @@ void Glauber::Fitter::SetFWhist(float mu, float k, float f)
  * @param k argument
  * @param f argument of Nancestors
  * @return BD for a given parameters
- */
+
 double Glauber::Fitter::FW(float n, float k, float f) const
 {
     // Compute BD.
@@ -600,4 +626,4 @@ double Glauber::Fitter::FW(float n, float k, float f) const
 //    std::cout<<"2"<<"  ="<<TMath::Power(k, n)<<std::endl;
 //    std::cout<<"3"<<"  ="<<TMath::Power((1-k), (Nancestors(f)-n))<<std::endl;
     return F;
-}
+} */

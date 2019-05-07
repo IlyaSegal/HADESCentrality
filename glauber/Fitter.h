@@ -25,28 +25,28 @@ namespace Glauber
         
         /**   Default constructor   **/
         Fitter() {};
-        Fitter(std::unique_ptr<TTree> tree) ;
+        Fitter(std::unique_ptr<TTree> tree, TString fmode) ;
         /**   Destructor   **/
         virtual ~Fitter(){};
         
-        void Init(int nEntries);
+        void Init(int nEntries, TString fmode);
         void SetGlauberFitHisto (Float_t f, Float_t mu, Float_t k, Int_t n = 10000, Float_t alpha = 0, Bool_t Norm2Data = true);
-	void SetGlauberFitHistoFW (Float_t f, Float_t mu, Float_t k, Int_t n = 10000, Float_t alpha = 0, Bool_t Norm2Data = true);
+//	void SetGlauberFitHistoFW (Float_t f, Float_t mu, Float_t k, Int_t n = 10000, Float_t alpha = 0, Bool_t Norm2Data = true);
         void NormalizeGlauberFit ();
         void DrawHistos (Bool_t isSim = true, Bool_t isData = true, Bool_t isGlauber = false, Bool_t isNBD = false);
         
         float FitGlauber (float *par, Float_t f0, Float_t f1, Int_t k0, Int_t k1, Int_t nEvents);
         void FindMuGoldenSection (Float_t *mu, Float_t *chi2, Float_t mu_min, Float_t mu_max, Float_t f, Float_t k, Int_t nEvents = 10000, Int_t nIter = 5, int n=0);
 	
-        float FitFW (float *par, Float_t f0, Float_t f1, Int_t k0, Int_t k1, Int_t nEvents);
-        void FindMuFWGoldenSection (Float_t *mu, Float_t *chi2, Float_t mu_min, Float_t mu_max, Float_t f, Float_t k, Int_t nEvents = 10000, Int_t nIter = 5, int n=0);
+//        float FitFW (float *par, Float_t f0, Float_t f1, Int_t k0, Int_t k1, Int_t nEvents);
+//        void FindMuFWGoldenSection (Float_t *mu, Float_t *chi2, Float_t mu_min, Float_t mu_max, Float_t f, Float_t k, Int_t nEvents = 10000, Int_t nIter = 5, int n=0);
         
         Float_t GetChi2 (void) const;
         
         Float_t NBD(Float_t n, Float_t mu, Float_t k) const;
         void SetNBDhist(Float_t mu, Float_t k);
-	Double_t FW(Float_t n, Float_t mu, Float_t k) const;
-        void SetFWhist(Float_t mu, Float_t k, Float_t f);
+//	Double_t FW(Float_t n, Float_t mu, Float_t k) const;
+//      void SetFWhist(Float_t mu, Float_t k, Float_t f);
 
         float Nancestors(float f) const;
         float NancestorsMax(float f) const;
@@ -71,10 +71,12 @@ namespace Glauber
         TH1F GetGlauberFitHisto () const { return fGlauberFitHisto; }
         TH1F GetDataHisto ()       const { return fDataHisto;  }
         TH1F GetNBDHisto ()        const { return fNbdHisto;   }
-	TH1F GetFWHisto ()         const { return fFWHisto;   }
+//	TH1F GetFWHisto ()         const { return fFWHisto;   }
         TH1F GetNpartHisto ()      const { return fNpartHisto; }
 	TH1F GetNpartAHisto ()     const { return fNpartAHisto; }
         TH1F GetNcollHisto ()      const { return fNcollHisto;  }
+	TH1F GetNprotonsAHisto ()  const { return fNprotonsAHisto;  }
+        TH1F GetNspecAHisto ()     const { return fNspecAHisto;  }
         TH1F GetBestFiHisto ()     const { return fBestFitHisto;  }
 
         
@@ -82,11 +84,13 @@ namespace Glauber
         
         /**   Data members  **/
         TH1F fNpartHisto;
+        TH1F fNprotonsAHisto;
+        TH1F fNspecAHisto;
 	TH1F fNpartAHisto; 
         TH1F fNcollHisto; 
         TH1F fDataHisto; 
         TH1F fNbdHisto;
-	TH1F fFWHisto; 
+//	TH1F fFWHisto; 
         TH1F fGlauberFitHisto; 
         TH1F fBestFitHisto;
         
@@ -97,6 +101,8 @@ namespace Glauber
         Float_t fNpart{-1.};
 	Float_t fNpartA{-1.};
         Float_t fNcoll{-1.};
+        Float_t fNprotonsA{-1.};
+	Float_t fNspecA{-1.};
 
         Float_t fMaxValue{-1.};
         

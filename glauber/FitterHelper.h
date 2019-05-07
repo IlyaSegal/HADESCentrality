@@ -18,7 +18,7 @@
 
 namespace Glauber
 {
-    inline void DrawHistos (const Fitter& fit, Bool_t isSim, Bool_t isData, Bool_t isGlauber, Bool_t isNBD, Bool_t isFW )
+    inline void DrawHistos (const Fitter& fit, Bool_t isSim, Bool_t isData, Bool_t isGlauber, Bool_t isNBD)
     {
         std::unique_ptr <TCanvas> c1 {new TCanvas("c1", "canvas", 1500, 900)};
 
@@ -35,7 +35,6 @@ namespace Glauber
         /*const*/ TH1F hGlaub = fit.GetGlauberFitHisto();
         /*const*/ TH1F hData = fit.GetDataHisto();
         /*const*/ TH1F hNBD = fit.GetNBDHisto();
-	/*const*/ TH1F hFW = fit.GetFWHisto();
         /*const*/ TH1F hNcoll = fit.GetNcollHisto();
         /*const*/ TH1F hNpart = fit.GetNpartHisto();
         /*const*/ TH1F hBestFit = fit.GetBestFiHisto();
@@ -78,13 +77,6 @@ namespace Glauber
             c1->cd(3);
             hNBD.Draw();
             hNBD.Write();
-
-        }
-
-	if (isFW){
-            c1->cd(3);
-            hFW.Draw();
-            hFW.Write();
 
         }
         
