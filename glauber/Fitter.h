@@ -30,18 +30,19 @@ namespace Glauber
         virtual ~Fitter(){};
         
         void Init(int nEntries, TString fmode);
-        void SetGlauberFitHisto (Float_t f, Float_t mu, Float_t k, Int_t n = 10000, Float_t alpha = 0, Bool_t Norm2Data = true);
+        void SetGlauberFitHisto (Float_t f, Float_t mu, Float_t k, Int_t n = 10000, double alpha = 0, Bool_t Norm2Data = true);
 //	void SetGlauberFitHistoFW (Float_t f, Float_t mu, Float_t k, Int_t n = 10000, Float_t alpha = 0, Bool_t Norm2Data = true);
         void NormalizeGlauberFit ();
         void DrawHistos (Bool_t isSim = true, Bool_t isData = true, Bool_t isGlauber = false, Bool_t isNBD = false);
         
-        float FitGlauber (float *par, Float_t f0, Float_t f1, Int_t k0, Int_t k1, Int_t nEvents);
-        void FindMuGoldenSection (Float_t *mu, Float_t *chi2, Float_t mu_min, Float_t mu_max, Float_t f, Float_t k, Int_t nEvents = 10000, Int_t nIter = 5, int n=0);
+        float FitGlauber (float *par, Float_t f0, Float_t f1, Int_t k0, Int_t k1, Int_t nEvents, double alpha=0);
+        void FindMuGoldenSection (Float_t *mu, Float_t *chi2, float*chi2_error, Float_t mu_min, Float_t mu_max, Float_t f, Float_t k, Int_t nEvents = 10000, Int_t nIter = 5, double alpha=0, int n=0);
 	
 //        float FitFW (float *par, Float_t f0, Float_t f1, Int_t k0, Int_t k1, Int_t nEvents);
 //        void FindMuFWGoldenSection (Float_t *mu, Float_t *chi2, Float_t mu_min, Float_t mu_max, Float_t f, Float_t k, Int_t nEvents = 10000, Int_t nIter = 5, int n=0);
         
         Float_t GetChi2 (void) const;
+	Float_t GetChi2Error (void) const;
         
         Float_t NBD(Float_t n, Float_t mu, Float_t k) const;
         void SetNBDhist(Float_t mu, Float_t k);

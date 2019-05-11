@@ -118,7 +118,7 @@ float Glauber::Fitter::NancestorsMax(float f) const
  * Populate fGlauberFitHisto with NBD x Na
  */
 
-void Glauber::Fitter::SetGlauberFitHisto (float f, float mu, float k, int n, float alpha, Bool_t Norm2Data)
+void Glauber::Fitter::SetGlauberFitHisto (float f, float mu, float k, int n, double alpha, Bool_t Norm2Data)
 {    
     fGlauberFitHisto = TH1F("glaub", "", fNbins*1.3, 0, 1.3*fMaxValue);
     fGlauberFitHisto.SetName("glaub_fit_histo");
@@ -132,11 +132,11 @@ void Glauber::Fitter::SetGlauberFitHisto (float f, float mu, float k, int n, flo
         const int Na = int(Nancestors(f));
                 
         float nHits {0.};
-        for (int j=0; j<Na; j++){
-//            nHits += ((1-alpha*fNpart*fNpart)*int(htemp->GetRandom()));
-	      nHits += (int(htemp->GetRandom()));
-        }
+        for (int j=0; j<Na; j++) nHits += ((1-alpha*fNpart*fNpart)*int(htemp->GetRandom()));
         fGlauberFitHisto.Fill(nHits);
+	fB_VS_Multiplicity.Fill(nHits,fB);
+	fNpart_VS_Multiplicity.Fill(nHits,fNpart);
+	fNcoll_VS_Multiplicity.Fill(nHits,fNcoll);
     }
     if (Norm2Data)
         NormalizeGlauberFit();
@@ -175,7 +175,7 @@ void Glauber::Fitter::NormalizeGlauberFit ()
  * @param nEvents
  * @param nIter
  */
-void Glauber::Fitter::FindMuGoldenSection (float *mu, float *chi2, float mu_min, float mu_max, float f, float k, int nEvents, int nIter, int n)
+void Glauber::Fitter::FindMuGoldenSection (float *mu, float *chi2, float*chi2_error, float mu_min, float mu_max, float f, float k, int nEvents, int nIter, double alpha, int n)
 {
     const float phi {(1+TMath::Sqrt(5))/2};
 
@@ -185,11 +185,13 @@ void Glauber::Fitter::FindMuGoldenSection (float *mu, float *chi2, float mu_min,
     /* right */
     float mu_2 = mu_min + (mu_max-mu_min)/phi;
     
-    SetGlauberFitHisto (f, mu_1, k, nEvents);
+    SetGlauberFitHisto (f, mu_1, k, nEvents, alpha);
     float chi2_mu1 = GetChi2 ();
+    float chi2_mu1_error = GetChi2Error ();
     
-    SetGlauberFitHisto (f, mu_2, k, nEvents);
+    SetGlauberFitHisto (f, mu_2, k, nEvents, alpha);
     float chi2_mu2 = GetChi2 ();
+    float chi2_mu2_error = GetChi2Error ();
     
     for (int j=0; j<nIter; j++)
     {        
@@ -199,8 +201,9 @@ void Glauber::Fitter::FindMuGoldenSection (float *mu, float *chi2, float mu_min,
             mu_1 = mu_2;
             mu_2 = mu_min + (mu_max-mu_min)/phi;
             chi2_mu1 = chi2_mu2;
-            SetGlauberFitHisto (f, mu_2, k, nEvents);
+            SetGlauberFitHisto (f, mu_2, k, nEvents, alpha);
             chi2_mu2 = GetChi2 ();
+	    chi2_mu2_error = GetChi2Error ();
         }
         else
         {
@@ -208,8 +211,9 @@ void Glauber::Fitter::FindMuGoldenSection (float *mu, float *chi2, float mu_min,
             mu_2 = mu_1;
             mu_1 = mu_max - (mu_max-mu_min)/phi; 
             chi2_mu2 = chi2_mu1;
-            SetGlauberFitHisto (f, mu_1, k, nEvents);
-            chi2_mu1 = GetChi2 ();            
+            SetGlauberFitHisto (f, mu_1, k, nEvents, alpha);
+            chi2_mu1 = GetChi2 (); 
+  	    chi2_mu1_error = GetChi2Error ();           
         }
         
         std::cout << "n = " << n+j << " f = "  << f << " k = " << k << " mu1 = " << mu_1 << " mu2 = " << mu_2 << " chi2_mu1 = " << chi2_mu1  << " chi2_mu2 = " << chi2_mu2 << std::endl;
@@ -219,6 +223,8 @@ void Glauber::Fitter::FindMuGoldenSection (float *mu, float *chi2, float mu_min,
     *mu = (chi2_mu1 < chi2_mu2) ? mu_1 : mu_2;
     /* take min(chi2) */
     *chi2 = (chi2_mu1 < chi2_mu2) ? chi2_mu1 : chi2_mu2;
+    /* take min(chi2_error) */
+    *chi2_error = (chi2_mu1 < chi2_mu2) ? chi2_mu1_error : chi2_mu2_error;
 }
 
 /**
@@ -231,12 +237,13 @@ void Glauber::Fitter::FindMuGoldenSection (float *mu, float *chi2, float mu_min,
  * @param k1 upper search edge for NBD parameter
  * @param nEvents
  */
-float Glauber::Fitter::FitGlauber (float *par, Float_t f0, Float_t f1, Int_t k0, Int_t k1, Int_t nEvents)
+float Glauber::Fitter::FitGlauber (float *par, Float_t f0, Float_t f1, Int_t k0, Int_t k1, Int_t nEvents, double alpha)
 {
     float f_fit{-1};
     float mu_fit{-1}; 
     float k_fit{-1};
     float Chi2Min {1e10};
+    float Chi2Min_error {0};
 
     const TString filename = Form ( "%s/fit_%4.2f_%d_%d_%d.root", fOutDirName.Data(), f0, k0, k1, fFitMinBin );
     
@@ -248,13 +255,14 @@ float Glauber::Fitter::FitGlauber (float *par, Float_t f0, Float_t f1, Int_t k0,
     
     TH1F h1("h1", "", fNbins, 0, fMaxValue);
            
-    float f, mu, k, chi2, sigma;
+    float f, mu, k, chi2, chi2_error, sigma;
 
     tree->Branch("histo", "TH1F", &h1);
     tree->Branch("f",    &f,    "f/F");   
     tree->Branch("mu",   &mu,   "mu/F");   
     tree->Branch("k",    &k,    "k/F");   
-    tree->Branch("chi2", &chi2, "chi2/F");   
+    tree->Branch("chi2", &chi2, "chi2/F");
+    tree->Branch("chi2_error", &chi2_error, "chi2_error/F");
     tree->Branch("sigma",&sigma,"sigma/F");   
 
     int n=1;
@@ -268,7 +276,7 @@ float Glauber::Fitter::FitGlauber (float *par, Float_t f0, Float_t f1, Int_t k0,
 		const float mu_min = 0.7*mu;
 		const float mu_max = 1.0*mu;
 
-		FindMuGoldenSection (&mu, &chi2, mu_min, mu_max, f, k, nEvents, 10, n);
+		FindMuGoldenSection (&mu, &chi2, &chi2_error, mu_min, mu_max, f, k, nEvents, 10, alpha, n);
 		n=n+10;
 		sigma = ( mu/k + 1 ) * mu;
 		h1 = fGlauberFitHisto;
@@ -281,6 +289,7 @@ float Glauber::Fitter::FitGlauber (float *par, Float_t f0, Float_t f1, Int_t k0,
 		    mu_fit = mu;
 		    k_fit = k;
 		    Chi2Min = chi2;
+		    Chi2Min_error = chi2_error;
 		    fBestFitHisto = fGlauberFitHisto;
 		}            
 
@@ -294,6 +303,7 @@ float Glauber::Fitter::FitGlauber (float *par, Float_t f0, Float_t f1, Int_t k0,
     par[0] = f_fit;
     par[1] = mu_fit;
     par[2] = k_fit;
+    par[3] = Chi2Min_error;
     
     return Chi2Min;
 }
@@ -324,6 +334,35 @@ float Glauber::Fitter::GetChi2 () const
     
     chi2 = chi2 / (highchibin - lowchibin + 1);
     return chi2;
+}
+
+/**
+ * Compare fGlauberFitHisto with fDataHisto
+ * @return chi2 error value
+ */
+float Glauber::Fitter::GetChi2Error () const 
+{
+    float chi2_error {0.0};
+
+    const int lowchibin = fFitMinBin;
+    const int highchibin = fFitMaxBin<fNbins ? fFitMaxBin : fNbins;
+    
+    for (int i=lowchibin; i<=highchibin; ++i) 
+    {
+        if (fDataHisto.GetBinContent(i) < 1.0) continue;
+        const float error2 = TMath::Power(fDataHisto.GetBinError(i), 2) + TMath::Power(fGlauberFitHisto.GetBinError(i), 2);
+//	std::cout<<"i="<<i<<"  DataError="<<fDataHisto.GetBinError(i)<<std::endl;
+//	std::cout<<"i="<<i<<"  GlauberError="<<fGlauberFitHisto.GetBinError(i)<<std::endl;
+        const float diff = (fGlauberFitHisto.GetBinContent(i) - fDataHisto.GetBinContent(i));
+//	std::cout<<"i="<<i<<"  DataContent="<<fDataHisto.GetBinContent(i)<<std::endl;
+//	std::cout<<"i="<<i<<"  GlauberContent="<<fGlauberFitHisto.GetBinContent(i)<<std::endl;
+	const float error_diff = (fGlauberFitHisto.GetBinError(i) - fDataHisto.GetBinError(i));
+
+        chi2_error += TMath::Power(diff*error_diff/error2, 2);
+    }
+    
+    chi2_error = 2*TMath::Power(chi2_error,0.5) / (highchibin - lowchibin + 1);
+    return chi2_error;
 }
 
 /**
@@ -408,10 +447,7 @@ std::unique_ptr<TH1F> Glauber::Fitter::GetModelHisto (const float range[2], TStr
         fSimTree->GetEntry(i);
         const int Na = int(Nancestors(f));
         float nHits{0.};
-        for (int j=0; j<Na; ++j){
-//            nHits += ((1-alpha*fNpart*fNpart)*(int)fNbdHisto.GetRandom());
-	      nHits += ((int)(fNbdHisto.GetRandom()));
-        }
+        for (int j=0; j<Na; ++j) nHits += ((1-alpha*fNpart*fNpart)*(int)fNbdHisto.GetRandom());
         
         if ( nHits > range[0] && nHits < range[1] ){
             hModel->Fill(modelpar);
