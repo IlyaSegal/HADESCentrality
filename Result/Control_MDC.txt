@@ -1,0 +1,24 @@
+f=1
+f=1
+k0=20
+k1=20
+min_bin=20   max_bin=90
+1000000
+100000
+1000000
+fNbins = 101
+fMaxValue = 101
+n = 1 f = 1 k = 20 mu1 = 0.204338 mu2 = 0.215941 chi2_mu1 = 15.8751 chi2_mu2 = 3.68992
+n = 2 f = 1 k = 20 mu1 = 0.215941 mu2 = 0.223112 chi2_mu1 = 3.68992 chi2_mu2 = 1.52365
+n = 3 f = 1 k = 20 mu1 = 0.223112 mu2 = 0.227544 chi2_mu1 = 1.52365 chi2_mu2 = 2.24749
+n = 4 f = 1 k = 20 mu1 = 0.220373 mu2 = 0.223112 chi2_mu1 = 2.05779 chi2_mu2 = 1.52365
+n = 5 f = 1 k = 20 mu1 = 0.223112 mu2 = 0.224805 chi2_mu1 = 1.52365 chi2_mu2 = 1.5379
+n = 6 f = 1 k = 20 mu1 = 0.222066 mu2 = 0.223112 chi2_mu1 = 1.63947 chi2_mu2 = 1.52365
+n = 7 f = 1 k = 20 mu1 = 0.223112 mu2 = 0.223759 chi2_mu1 = 1.52365 chi2_mu2 = 1.5645
+n = 8 f = 1 k = 20 mu1 = 0.222713 mu2 = 0.223112 chi2_mu1 = 1.72208 chi2_mu2 = 1.52365
+n = 9 f = 1 k = 20 mu1 = 0.223112 mu2 = 0.223359 chi2_mu1 = 1.52365 chi2_mu2 = 1.47609
+n = 10 f = 1 k = 20 mu1 = 0.223359 mu2 = 0.223512 chi2_mu1 = 1.47609 chi2_mu2 = 1.47519
+f = 1    mu = 0.223512    k = 20    chi2 = 1.47519    chi2_error = 0.126545
+Info in <TCanvas::Print>: pdf file glauber.pdf has been created
+Info in <TH1F::SaveAs>: ROOT file b_test.root has been created
+END!
