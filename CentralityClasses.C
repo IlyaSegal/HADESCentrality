@@ -17,15 +17,19 @@ TString CentralityEstimatorName[kCentralityEstimator]=
     };
 
 void CentralityClasses(Int_t CentralityClasses){
-	TFile *f1 = new TFile("/home/vad/centrality/build/Result/HistoCutResult_TOF.root");
-	TFile *f2 = new TFile("/home/vad/centrality/build/Result/HistoCutResult_RPC.root");
-	TFile *f3 = new TFile("/home/vad/centrality/build/Result/HistoCutResult_MDC.root");
-	TFile *f4 = new TFile("/home/vad/centrality/build/Result/HistoCutResult_FW.root");
-	TFile *f5 = new TFile("/home/vad/NIR_codes/Centrality/gmc-Au3Au3-snn23.6-md0.4-nd-1.0-rc1-smax99.0_1000000.root");
-	TFile *f6 = new TFile("/home/vad/NIR_codes/QAHistoBuilder/QASelectedPT2Histos.root");
-	TFile *f7 = new TFile("/home/vad/NIR_codes/Centrality/2.root");
-	TFile *f8 = new TFile("/home/vad/NIR_codes/Centrality/1.root");
-	TFile *f  = new TFile("FINAL.root", "recreate");
+	TFile *f1  = new TFile("/home/vad/centrality/build/Result/HistoCutResult_TOF.root");
+	TFile *f2  = new TFile("/home/vad/centrality/build/Result/HistoCutResult_RPC.root");
+	TFile *f3  = new TFile("/home/vad/centrality/build/Result/HistoCutResult_MDC.root");
+	TFile *f4  = new TFile("/home/vad/centrality/build/Result/HistoCutResult_FW.root");
+	TFile *f5  = new TFile("/home/vad/NIR_codes/Centrality/gmc-Au3Au3-snn23.6-md0.4-nd-1.0-rc1-smax99.0_1000000.root");
+	TFile *f6  = new TFile("/home/vad/NIR_codes/QAHistoBuilder/QASelectedPT2Histos.root");
+	TFile *f7  = new TFile("/home/vad/NIR_codes/Centrality/2.root");
+	TFile *f8  = new TFile("/home/vad/NIR_codes/Centrality/1.root");
+	TFile *f9  = new TFile("/home/vad/centrality/build/Result/glauber_qa_TOF.root");
+	TFile *f10 = new TFile("/home/vad/centrality/build/Result/glauber_qa_RPC.root");
+	TFile *f11 = new TFile("/home/vad/centrality/build/Result/glauber_qa_MDC.root");
+	TFile *f12 = new TFile("/home/vad/centrality/build/Result/glauber_qa_FW.root");
+	TFile *fOut   = new TFile("FINAL.root", "recreate");
 	TTree *Borders_TOF=(TTree*)f1->Get(Form("Borders_%s", CentralityEstimatorName[1].Data()));
 	TTree *Borders_RPC=(TTree*)f2->Get(Form("Borders_%s", CentralityEstimatorName[2].Data()));
 	TTree *Borders_MDC=(TTree*)f3->Get(Form("Borders_%s", CentralityEstimatorName[3].Data()));
@@ -34,12 +38,20 @@ void CentralityClasses(Int_t CentralityClasses){
 	TTree *tGlauber_FW=(TTree*)f8->Get("nt_Au3_Au3");
 	TTree *HADES_FW=(TTree*)f7->Get("HADES_FW");
 	TTree *Result=new TTree("Result", "Result");
+	TTree *Parameters_TOF=(TTree*)f9->Get("BestResult");
+	TTree *Parameters_RPC=(TTree*)f10->Get("BestResult");
+	TTree *Parameters_MDC=(TTree*)f11->Get("BestResult");
+	TTree *Parameters_FW=(TTree*)f12->Get("BestResult");
 
 	Int_t Ncc, MinBorder_TOF, MaxBorder_TOF,  MinBorder_RPC, MaxBorder_RPC, MinBorder_MDC, MaxBorder_MDC, MinBorder_TOF_R, MaxBorder_TOF_R,  MinBorder_RPC_R, MaxBorder_RPC_R, MinBorder_MDC_R, MaxBorder_MDC_R, MinBorder_FW_R, MaxBorder_FW_R; 
 	Int_t MinBorder_FW, MaxBorder_FW;
 	Float_t MinPercent, MaxPercent, B, Npart, Ncoll, NprotonsA; 
 	double B_av, Npart_av, Ncoll_av, B_TOF_av, Npart_TOF_av, Ncoll_TOF_av, B_RPC_av, Npart_RPC_av, Ncoll_RPC_av, B_MDC_av, Npart_MDC_av, Ncoll_MDC_av, B_FW_av, Npart_FW_av, Ncoll_FW_av;
 	double RMS_B_av, RMS_Npart_av, RMS_Ncoll_av, RMS_B_TOF_av, RMS_Npart_TOF_av, RMS_Ncoll_TOF_av, RMS_B_RPC_av, RMS_Npart_RPC_av, RMS_Ncoll_RPC_av, RMS_B_MDC_av, RMS_Npart_MDC_av, RMS_Ncoll_MDC_av, RMS_B_FW_av, RMS_Npart_FW_av, RMS_Ncoll_FW_av;
+	float mu_TOF, f_TOF, k_TOF, alpha_TOF, chi2_TOF, chi2_error_TOF;
+	float mu_RPC, f_RPC, k_RPC, alpha_RPC, chi2_RPC, chi2_error_RPC;
+	float mu_MDC, f_MDC, k_MDC, alpha_MDC, chi2_MDC, chi2_error_MDC;
+	float mu_FW, f_FW, k_FW, alpha_FW, chi2_FW, chi2_error_FW;
 	
 	Borders_TOF -> SetBranchAddress("MinBorder", &MinBorder_TOF);
 	Borders_TOF -> SetBranchAddress("MaxBorder", &MaxBorder_TOF);
@@ -63,6 +75,30 @@ void CentralityClasses(Int_t CentralityClasses){
 	Int_t entries_glauber_FW=(Int_t)tGlauber_FW->GetEntries();
 	HADES_FW    -> SetBranchAddress("NprotonsA", &NprotonsA);
 	Int_t entries_fw=(Int_t)HADES_FW->GetEntries();
+	Parameters_TOF -> SetBranchAddress("mu", &mu_TOF);
+	Parameters_TOF -> SetBranchAddress("f", &f_TOF);
+	Parameters_TOF -> SetBranchAddress("k", &k_TOF);
+	Parameters_TOF -> SetBranchAddress("alpha", &alpha_TOF);
+	Parameters_TOF -> SetBranchAddress("chi2", &chi2_TOF);
+	Parameters_TOF -> SetBranchAddress("chi2_error", &chi2_error_TOF);
+	Parameters_RPC -> SetBranchAddress("mu", &mu_RPC);
+	Parameters_RPC -> SetBranchAddress("f", &f_RPC);
+	Parameters_RPC -> SetBranchAddress("k", &k_RPC);
+	Parameters_RPC -> SetBranchAddress("alpha", &alpha_RPC);
+	Parameters_RPC -> SetBranchAddress("chi2", &chi2_RPC);
+	Parameters_RPC -> SetBranchAddress("chi2_error", &chi2_error_RPC);
+	Parameters_MDC -> SetBranchAddress("mu", &mu_MDC);
+	Parameters_MDC -> SetBranchAddress("f", &f_MDC);
+	Parameters_MDC -> SetBranchAddress("k", &k_MDC);
+	Parameters_MDC -> SetBranchAddress("alpha", &alpha_MDC);
+	Parameters_MDC -> SetBranchAddress("chi2", &chi2_MDC);
+	Parameters_MDC -> SetBranchAddress("chi2_error", &chi2_error_MDC);
+	Parameters_FW  -> SetBranchAddress("mu", &mu_FW);
+	Parameters_FW  -> SetBranchAddress("f", &f_FW);
+	Parameters_FW  -> SetBranchAddress("k", &k_FW);
+	Parameters_FW  -> SetBranchAddress("alpha", &alpha_FW);
+	Parameters_FW  -> SetBranchAddress("chi2", &chi2_FW);
+	Parameters_FW  -> SetBranchAddress("chi2_error", &chi2_error_FW);
 
 	Result -> Branch("Ncc", &Ncc);
 	Result -> Branch("MinPercent", &MinPercent);
@@ -107,7 +143,7 @@ void CentralityClasses(Int_t CentralityClasses){
 	Result -> Branch("RMS_Ncoll_FW_average", &RMS_Ncoll_FW_av);
 
 	TH1F* B_VS_CentralityHisto_TOF[CentralityClasses+1];
-	for (int i = 0; i < CentralityClasses+1; i++)   B_VS_CentralityHisto_TOF[i] = new TH1F(Form("B_VS_CentralityClass_TOF %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";;B, fm;counts", 200, 0, 20);
+	for (int i = 0; i < CentralityClasses+1; i++)   B_VS_CentralityHisto_TOF[i] = new TH1F(Form("B_VS_CentralityClass_TOF %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";B, fm;counts", 200, 0, 20);
 	int j=1; 
 	for (int i = 0; i < CentralityClasses+1; i++) {
 		B_VS_CentralityHisto_TOF[i] -> SetLineColor(j);
@@ -117,7 +153,7 @@ void CentralityClasses(Int_t CentralityClasses){
 	for (int i = 0; i < CentralityClasses+1; i++) B_VS_CentralityHisto_TOF[i] -> SetLineWidth(4);
 
 	TH1F* Npart_VS_CentralityHisto_TOF[CentralityClasses+1];
-	for (int i = 0; i < CentralityClasses+1; i++)   Npart_VS_CentralityHisto_TOF[i] = new TH1F(Form("Npart_VS_CentralityClass_TOF %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";;Npart;counts", 400, 0, 400);
+	for (int i = 0; i < CentralityClasses+1; i++)   Npart_VS_CentralityHisto_TOF[i] = new TH1F(Form("Npart_VS_CentralityClass_TOF %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";Npart;counts", 400, 0, 400);
 	j=1; 
 	for (int i = 0; i < CentralityClasses+1; i++) {
 		Npart_VS_CentralityHisto_TOF[i] -> SetLineColor(j);
@@ -127,7 +163,7 @@ void CentralityClasses(Int_t CentralityClasses){
 	for (int i = 0; i < CentralityClasses+1; i++) Npart_VS_CentralityHisto_TOF[i] -> SetLineWidth(4);
 
 	TH1F* Ncoll_VS_CentralityHisto_TOF[CentralityClasses+1];
-	for (int i = 0; i < CentralityClasses+1; i++)   Ncoll_VS_CentralityHisto_TOF[i] = new TH1F(Form("Ncoll_VS_CentralityClass_TOF %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";;Ncoll;counts", 750, 0, 750);
+	for (int i = 0; i < CentralityClasses+1; i++)   Ncoll_VS_CentralityHisto_TOF[i] = new TH1F(Form("Ncoll_VS_CentralityClass_TOF %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";Ncoll;counts", 750, 0, 750);
 	j=1; 
 	for (int i = 0; i < CentralityClasses+1; i++) {
 		Ncoll_VS_CentralityHisto_TOF[i] -> SetLineColor(j);
@@ -137,7 +173,7 @@ void CentralityClasses(Int_t CentralityClasses){
 	for (int i = 0; i < CentralityClasses+1; i++) Ncoll_VS_CentralityHisto_TOF[i] -> SetLineWidth(4);
 
 	TH1F* B_VS_CentralityHisto_RPC[CentralityClasses+1];
-	for (int i = 0; i < CentralityClasses+1; i++)   B_VS_CentralityHisto_RPC[i] = new TH1F(Form("B_VS_CentralityClass_RPC %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";;B, fm;counts", 200, 0, 20);
+	for (int i = 0; i < CentralityClasses+1; i++)   B_VS_CentralityHisto_RPC[i] = new TH1F(Form("B_VS_CentralityClass_RPC %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";B, fm;counts", 200, 0, 20);
 	j=1; 
 	for (int i = 0; i < CentralityClasses+1; i++) {
 		B_VS_CentralityHisto_RPC[i] -> SetLineColor(j);
@@ -147,7 +183,7 @@ void CentralityClasses(Int_t CentralityClasses){
 	for (int i = 0; i < CentralityClasses+1; i++) B_VS_CentralityHisto_RPC[i] -> SetLineWidth(4);
 
 	TH1F* Npart_VS_CentralityHisto_RPC[CentralityClasses+1];
-	for (int i = 0; i < CentralityClasses+1; i++)   Npart_VS_CentralityHisto_RPC[i] = new TH1F(Form("Npart_VS_CentralityClass_RPC %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";;Npart;counts", 400, 0, 400);
+	for (int i = 0; i < CentralityClasses+1; i++)   Npart_VS_CentralityHisto_RPC[i] = new TH1F(Form("Npart_VS_CentralityClass_RPC %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";Npart;counts", 400, 0, 400);
 	j=1; 
 	for (int i = 0; i < CentralityClasses+1; i++) {
 		Npart_VS_CentralityHisto_RPC[i] -> SetLineColor(j);
@@ -157,7 +193,7 @@ void CentralityClasses(Int_t CentralityClasses){
 	for (int i = 0; i < CentralityClasses+1; i++) Npart_VS_CentralityHisto_RPC[i] -> SetLineWidth(4);
 
 	TH1F* Ncoll_VS_CentralityHisto_RPC[CentralityClasses+1];
-	for (int i = 0; i < CentralityClasses+1; i++)   Ncoll_VS_CentralityHisto_RPC[i] = new TH1F(Form("Ncoll_VS_CentralityClass_RPC %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";;Ncoll;counts", 750, 0, 750);
+	for (int i = 0; i < CentralityClasses+1; i++)   Ncoll_VS_CentralityHisto_RPC[i] = new TH1F(Form("Ncoll_VS_CentralityClass_RPC %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";Ncoll;counts", 750, 0, 750);
 	j=1; 
 	for (int i = 0; i < CentralityClasses+1; i++) {
 		Ncoll_VS_CentralityHisto_RPC[i] -> SetLineColor(j);
@@ -167,7 +203,7 @@ void CentralityClasses(Int_t CentralityClasses){
 	for (int i = 0; i < CentralityClasses+1; i++) Ncoll_VS_CentralityHisto_RPC[i] -> SetLineWidth(4);
 
 	TH1F* B_VS_CentralityHisto_MDC[CentralityClasses+1];
-	for (int i = 0; i < CentralityClasses+1; i++)   B_VS_CentralityHisto_MDC[i] = new TH1F(Form("B_VS_CentralityClass_MDC %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";;B, fm;counts", 200, 0, 20);
+	for (int i = 0; i < CentralityClasses+1; i++)   B_VS_CentralityHisto_MDC[i] = new TH1F(Form("B_VS_CentralityClass_MDC %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";B, fm;counts", 200, 0, 20);
 	j=1; 
 	for (int i = 0; i < CentralityClasses+1; i++) {
 		B_VS_CentralityHisto_MDC[i] -> SetLineColor(j);
@@ -177,7 +213,7 @@ void CentralityClasses(Int_t CentralityClasses){
 	for (int i = 0; i < CentralityClasses+1; i++) B_VS_CentralityHisto_MDC[i] -> SetLineWidth(4);
 
 	TH1F* Npart_VS_CentralityHisto_MDC[CentralityClasses+1];
-	for (int i = 0; i < CentralityClasses+1; i++)   Npart_VS_CentralityHisto_MDC[i] = new TH1F(Form("Npart_VS_CentralityClass_MDC %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";;Npart;counts", 400, 0, 400);
+	for (int i = 0; i < CentralityClasses+1; i++)   Npart_VS_CentralityHisto_MDC[i] = new TH1F(Form("Npart_VS_CentralityClass_MDC %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";Npart;counts", 400, 0, 400);
 	j=1; 
 	for (int i = 0; i < CentralityClasses+1; i++) {
 		Npart_VS_CentralityHisto_MDC[i] -> SetLineColor(j);
@@ -187,7 +223,7 @@ void CentralityClasses(Int_t CentralityClasses){
 	for (int i = 0; i < CentralityClasses+1; i++) Npart_VS_CentralityHisto_MDC[i] -> SetLineWidth(4);
 
 	TH1F* Ncoll_VS_CentralityHisto_MDC[CentralityClasses+1];
-	for (int i = 0; i < CentralityClasses+1; i++)   Ncoll_VS_CentralityHisto_MDC[i] = new TH1F(Form("Ncoll_VS_CentralityClass_MDC %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";;Ncoll;counts", 750, 0, 750);
+	for (int i = 0; i < CentralityClasses+1; i++)   Ncoll_VS_CentralityHisto_MDC[i] = new TH1F(Form("Ncoll_VS_CentralityClass_MDC %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";Ncoll;counts", 750, 0, 750);
 	j=1; 
 	for (int i = 0; i < CentralityClasses+1; i++) {
 		Ncoll_VS_CentralityHisto_MDC[i] -> SetLineColor(j);
@@ -197,7 +233,7 @@ void CentralityClasses(Int_t CentralityClasses){
 	for (int i = 0; i < CentralityClasses+1; i++) Ncoll_VS_CentralityHisto_MDC[i] -> SetLineWidth(4);
 
 	TH1F* B_VS_CentralityHisto_FW[CentralityClasses+1];
-	for (int i = 0; i < CentralityClasses+1; i++)   B_VS_CentralityHisto_FW[i] = new TH1F(Form("B_VS_CentralityClass_FW %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";;B, fm;counts", 200, 0, 20);
+	for (int i = 0; i < CentralityClasses+1; i++)   B_VS_CentralityHisto_FW[i] = new TH1F(Form("B_VS_CentralityClass_FW %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";B, fm;counts", 200, 0, 20);
 	j=1; 
 	for (int i = 0; i < CentralityClasses+1; i++) {
 		B_VS_CentralityHisto_FW[i] -> SetLineColor(j);
@@ -207,7 +243,7 @@ void CentralityClasses(Int_t CentralityClasses){
 	for (int i = 0; i < CentralityClasses+1; i++) B_VS_CentralityHisto_FW[i] -> SetLineWidth(4);
 
 	TH1F* Npart_VS_CentralityHisto_FW[CentralityClasses+1];
-	for (int i = 0; i < CentralityClasses+1; i++)   Npart_VS_CentralityHisto_FW[i] = new TH1F(Form("Npart_VS_CentralityClass_FW %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";;Npart;counts", 400, 0, 400);
+	for (int i = 0; i < CentralityClasses+1; i++)   Npart_VS_CentralityHisto_FW[i] = new TH1F(Form("Npart_VS_CentralityClass_FW %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";Npart;counts", 400, 0, 400);
 	j=1; 
 	for (int i = 0; i < CentralityClasses+1; i++) {
 		Npart_VS_CentralityHisto_FW[i] -> SetLineColor(j);
@@ -217,7 +253,7 @@ void CentralityClasses(Int_t CentralityClasses){
 	for (int i = 0; i < CentralityClasses+1; i++) Npart_VS_CentralityHisto_FW[i] -> SetLineWidth(4);
 
 	TH1F* Ncoll_VS_CentralityHisto_FW[CentralityClasses+1];
-	for (int i = 0; i < CentralityClasses+1; i++)   Ncoll_VS_CentralityHisto_FW[i] = new TH1F(Form("Ncoll_VS_CentralityClass_FW %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";;Ncoll;counts", 750, 0, 750);
+	for (int i = 0; i < CentralityClasses+1; i++)   Ncoll_VS_CentralityHisto_FW[i] = new TH1F(Form("Ncoll_VS_CentralityClass_FW %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";Ncoll;counts", 750, 0, 750);
 	j=1; 
 	for (int i = 0; i < CentralityClasses+1; i++) {
 		Ncoll_VS_CentralityHisto_FW[i] -> SetLineColor(j);
@@ -227,7 +263,7 @@ void CentralityClasses(Int_t CentralityClasses){
 	for (int i = 0; i < CentralityClasses+1; i++) Ncoll_VS_CentralityHisto_FW[i] -> SetLineWidth(4);
 
 	TH1F* hitsTOF_VS_CentralityHisto[CentralityClasses+1];
-	for (int i = 0; i < CentralityClasses+1; i++)   hitsTOF_VS_CentralityHisto[i] = new TH1F(Form("hitsTOF_VS_CentralityClass %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";;hitsTOF;counts", 100, 0, 100);
+	for (int i = 0; i < CentralityClasses+1; i++)   hitsTOF_VS_CentralityHisto[i] = new TH1F(Form("hitsTOF_VS_CentralityClass %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";hitsTOF;counts", 100, 0, 100);
 	j=1; 
 	for (int i = 0; i < CentralityClasses+1; i++) {
 		hitsTOF_VS_CentralityHisto[i] -> SetLineColor(j);
@@ -237,7 +273,7 @@ void CentralityClasses(Int_t CentralityClasses){
 	for (int i = 0; i < CentralityClasses+1; i++) hitsTOF_VS_CentralityHisto[i] -> SetLineWidth(4);
 
 	TH1F* hitsRPC_VS_CentralityHisto[CentralityClasses+1];
-	for (int i = 0; i < CentralityClasses+1; i++)   hitsRPC_VS_CentralityHisto[i] = new TH1F(Form("hitsRPC_VS_CentralityClass %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";;hitsRPC;counts", 200, 0, 200);
+	for (int i = 0; i < CentralityClasses+1; i++)   hitsRPC_VS_CentralityHisto[i] = new TH1F(Form("hitsRPC_VS_CentralityClass %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";hitsRPC;counts", 200, 0, 200);
 	j=1; 
 	for (int i = 0; i < CentralityClasses+1; i++) {
 		hitsRPC_VS_CentralityHisto[i] -> SetLineColor(j);
@@ -247,7 +283,7 @@ void CentralityClasses(Int_t CentralityClasses){
 	for (int i = 0; i < CentralityClasses+1; i++) hitsRPC_VS_CentralityHisto[i] -> SetLineWidth(4);
 
 	TH1F* tracksMDC_VS_CentralityHisto[CentralityClasses+1];
-	for (int i = 0; i < CentralityClasses+1; i++)   tracksMDC_VS_CentralityHisto[i] = new TH1F(Form("tracksMDC_VS_CentralityClass %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";;tracksMDC;counts", 150, 0, 150);
+	for (int i = 0; i < CentralityClasses+1; i++)   tracksMDC_VS_CentralityHisto[i] = new TH1F(Form("tracksMDC_VS_CentralityClass %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";tracksMDC;counts", 150, 0, 150);
 	j=1; 
 	for (int i = 0; i < CentralityClasses+1; i++) {
 		tracksMDC_VS_CentralityHisto[i] -> SetLineColor(j);
@@ -257,7 +293,7 @@ void CentralityClasses(Int_t CentralityClasses){
 	for (int i = 0; i < CentralityClasses+1; i++) tracksMDC_VS_CentralityHisto[i] -> SetLineWidth(4);
 
 	TH1F* FWSumChargeZ_VS_CentralityHisto[CentralityClasses+1];
-	for (int i = 0; i < CentralityClasses+1; i++)   FWSumChargeZ_VS_CentralityHisto[i] = new TH1F(Form("FWSumChargeZ_VS_CentralityClass %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";;FWSumChargeZ;counts", 100, 0, 100);
+	for (int i = 0; i < CentralityClasses+1; i++)   FWSumChargeZ_VS_CentralityHisto[i] = new TH1F(Form("FWSumChargeZ_VS_CentralityClass %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses), ";FWSumChargeZ;counts", 100, 0, 100);
 	j=1; 
 	for (int i = 0; i < CentralityClasses+1; i++) {
 		FWSumChargeZ_VS_CentralityHisto[i] -> SetLineColor(j);
@@ -265,6 +301,15 @@ void CentralityClasses(Int_t CentralityClasses){
 		if (j==9) j=1;
 		}
 	for (int i = 0; i < CentralityClasses+1; i++) FWSumChargeZ_VS_CentralityHisto[i] -> SetLineWidth(4);
+
+	TH1F NBDCheck[4];
+	TH1F* NBDFit[4];
+	for (int i = 0; i < 4; i++) NBDFit[i] = new TH1F(Form("NBDFit_%s", CentralityEstimatorName[i+1].Data()), ";hits;p", 7, 0, 7);
+
+	NBDFit[0]=(TH1F*)f9->Get("nbd");
+	NBDFit[1]=(TH1F*)f10->Get("nbd");
+	NBDFit[2]=(TH1F*)f11->Get("nbd");
+	NBDFit[3]=(TH1F*)f12->Get("nbd");
 
 	TH1F* B_average_VS_Centrality         = new TH1F("B_average_VS_Centrality", ";Centrality Percent;B, fm", CentralityClasses, 0, 100);
 	TH1F* Npart_average_VS_Centrality     = new TH1F("Npart_average_VS_Centrality", ";Centrality Percent;Npart", CentralityClasses, 0, 100);
@@ -363,25 +408,26 @@ void CentralityClasses(Int_t CentralityClasses){
 	Ncoll_average_VS_Centrality_FW  -> SetMarkerColor(5);
 
 	std::unique_ptr<TTree> t {(TTree*)f8->Get("nt_Au3_Au3")};
-	Glauber::Fitter *fitter=new Glauber::Fitter(move(t), "Default");
+	std::unique_ptr<TTree> t_FW {(TTree*)f7->Get("HADES_FW")};
+	Glauber::Fitter *fitter=new Glauber::Fitter(move(t), move(t_FW));
 	tGlauber    -> SetBranchAddress("Npart", &Npart);
 	tGlauber    -> SetBranchAddress("Ncoll", &Ncoll);
 	tGlauber    -> SetBranchAddress("B", &B);
 
 	fitter -> Glauber::Fitter::SetInputHisto (*((TH1F*)f6->Get("hitsTOF_selected")));
 	fitter -> Glauber::Fitter::Init(entries_glauber, "Default");
-	double alpha=1.64e-6;
+	Parameters_TOF->GetEntry(0);
+	fitter->Glauber::Fitter::SetNBDhist(mu_TOF, k_TOF);
+        std::unique_ptr<TH1F> htemp1 {(TH1F*)((fitter->Glauber::Fitter::GetNBDHisto()).Clone("htemp1"))};
+	cout<<"mu="<<mu_TOF<<"   f="<<f_TOF<<"   k="<<k_TOF<<"   alpha="<<alpha_TOF<<"   chi2="<<chi2_TOF<<"   chi2_error="<<chi2_error_TOF<<endl;
+	NBDCheck[0]=(fitter->Glauber::Fitter::GetNBDHisto());
 	for (int i = 0; i < entries_glauber; i++) {
-		cout<<i<<endl;		
+//		cout<<i<<endl;		
 		tGlauber -> GetEntry(i);
-		
-		double v=1.0;
-		int Na = int(v*Npart+(1-v)*Ncoll);
-		fitter->Glauber::Fitter::SetNBDhist(0.21, 8.0);
-                std::unique_ptr<TH1F> htemp {(TH1F*)((fitter->Glauber::Fitter::GetNBDHisto()).Clone("htemp"))};
+		int Na = int(f_TOF*Npart+(1-f_TOF)*Ncoll);
         	float nHits {0.};
-        	for (int j=0; j<Na; j++) nHits += (1-alpha*Npart*Npart)*(htemp->GetRandom());	
-		cout<<"alpha="<<(1-alpha*Npart*Npart)<<"      nhits_TOF="<<nHits<<endl;
+        	for (int j=0; j<Na; j++) nHits += (1-alpha_TOF*Npart*Npart)*(htemp1->GetRandom());	
+//		cout<<"B="<<B<<"   Npart="<<Npart<<"   Ncoll="<<Ncoll<<"   Na="<<Na<<"   nhits_TOF="<<nHits<<endl;
         	for (int j=0; j<entries_TOF; j++) {
 			Borders_TOF -> GetEntry(j);
 			if (nHits>=MinBorder_TOF && nHits<=MaxBorder_TOF) {
@@ -401,17 +447,18 @@ void CentralityClasses(Int_t CentralityClasses){
 
 	fitter -> Glauber::Fitter::SetInputHisto (*((TH1F*)f6->Get("hitsRPC_selected")));
 	fitter -> Glauber::Fitter::Init(entries_glauber, "Default");
+	Parameters_RPC->GetEntry(0);
+	fitter->Glauber::Fitter::SetNBDhist(mu_RPC, k_RPC);
+        std::unique_ptr<TH1F> htemp2 {(TH1F*)((fitter->Glauber::Fitter::GetNBDHisto()).Clone("htemp2"))};
+	cout<<"mu="<<mu_RPC<<"   f="<<f_RPC<<"   k="<<k_RPC<<"   alpha="<<alpha_RPC<<"   chi2="<<chi2_RPC<<"   chi2_error="<<chi2_error_RPC<<endl;
+	NBDCheck[1]=(fitter->Glauber::Fitter::GetNBDHisto());
 	for (int i = 0; i < entries_glauber; i++) {
-		cout<<i<<endl;		
+//		cout<<i<<endl;		
 		tGlauber -> GetEntry(i);
-		
-		double v=1.0;
-		int Na = int(v*Npart+(1-v)*Ncoll);
-		fitter->Glauber::Fitter::SetNBDhist(0.49, 31.0);
-                std::unique_ptr<TH1F> htemp {(TH1F*)((fitter->Glauber::Fitter::GetNBDHisto()).Clone("htemp"))};
+		int Na = int(f_RPC*Npart+(1-f_RPC)*Ncoll);
         	float nHits {0.};
-        	for (int j=0; j<Na; j++) nHits += (1-alpha*Npart*Npart)*(htemp->GetRandom());	
-		cout<<"alpha="<<(1-alpha*Npart*Npart)<<"      nhits_RPC="<<nHits<<endl;
+        	for (int j=0; j<Na; j++) nHits += (1-alpha_RPC*Npart*Npart)*(htemp2->GetRandom());	
+//		cout<<"B="<<B<<"   Npart="<<Npart<<"   Ncoll="<<Ncoll<<"   Na="<<Na<<"   nhits_RPC="<<nHits<<endl;
         	for (int j=0; j<entries_RPC; j++) {
 			Borders_RPC -> GetEntry(j);
 			if (nHits>=MinBorder_RPC && nHits<=MaxBorder_RPC) {
@@ -431,18 +478,18 @@ void CentralityClasses(Int_t CentralityClasses){
 
 	fitter -> Glauber::Fitter::SetInputHisto (*((TH1F*)f6->Get("tracksMDC_selected")));
 	fitter -> Glauber::Fitter::Init(entries_glauber, "Default");
-	alpha=1.10e-7;
+	Parameters_MDC->GetEntry(0);
+	fitter->Glauber::Fitter::SetNBDhist(mu_MDC, k_MDC);
+        std::unique_ptr<TH1F> htemp3 {(TH1F*)((fitter->Glauber::Fitter::GetNBDHisto()).Clone("htemp3"))};
+	cout<<"mu="<<mu_MDC<<"   f="<<f_MDC<<"   k="<<k_MDC<<"   alpha="<<alpha_MDC<<"   chi2="<<chi2_MDC<<"   chi2_error="<<chi2_error_MDC<<endl;
+	NBDCheck[2]=(fitter->Glauber::Fitter::GetNBDHisto());
 	for (int i = 0; i < entries_glauber; i++) {
-		cout<<i<<endl;		
+//		cout<<i<<endl;		
 		tGlauber -> GetEntry(i);
-		
-		double v=1.0;
-		int Na = int(v*Npart+(1-v)*Ncoll);
-		fitter->Glauber::Fitter::SetNBDhist(0.22, 22.0);
-                std::unique_ptr<TH1F> htemp {(TH1F*)((fitter->Glauber::Fitter::GetNBDHisto()).Clone("htemp"))};
+		int Na = int(f_MDC*Npart+(1-f_MDC)*Ncoll);
         	float nHits {0.};
-        	for (int j=0; j<Na; j++) nHits += (1-alpha*Npart*Npart)*(htemp->GetRandom());
-		cout<<"alpha="<<(1-alpha*Npart*Npart)<<"      nhits_MDC="<<nHits<<endl;
+        	for (int j=0; j<Na; j++) nHits += (1-alpha_MDC*Npart*Npart)*(htemp3->GetRandom());
+//		cout<<"B="<<B<<"   Npart="<<Npart<<"   Ncoll="<<Ncoll<<"   Na="<<Na<<"   nhits_MDC="<<nHits<<endl;
         	for (int j=0; j<entries_MDC; j++) {
 			Borders_MDC -> GetEntry(j);
 			if (nHits>=MinBorder_MDC && nHits<=MaxBorder_MDC) {
@@ -465,18 +512,19 @@ void CentralityClasses(Int_t CentralityClasses){
 	tGlauber_FW -> SetBranchAddress("B", &B);
 	fitter -> Glauber::Fitter::SetInputHisto (*((TH1F*)f6->Get("FWSumChargeZ_selected")));
 	fitter -> Glauber::Fitter::Init(entries_glauber, "PSD");
+	Parameters_FW->GetEntry(0);
+	fitter->Glauber::Fitter::SetNBDhist(mu_FW, k_FW);
+        std::unique_ptr<TH1F> htemp4 {(TH1F*)((fitter->Glauber::Fitter::GetNBDHisto()).Clone("htemp4"))};
+	cout<<"mu="<<mu_FW<<"   f="<<f_FW<<"   k="<<k_FW<<"   alpha="<<alpha_FW<<"   chi2="<<chi2_FW<<"   chi2_error="<<chi2_error_FW<<endl;
+	NBDCheck[3]=(fitter->Glauber::Fitter::GetNBDHisto());
 	for (int i = 0; i < entries_fw; i++) {
-		cout<<i<<endl;		
+//		cout<<i<<endl;		
 		tGlauber_FW -> GetEntry(i);
 		HADES_FW    -> GetEntry(i);
-		
-		const int Na = int(NprotonsA);
-		fitter->Glauber::Fitter::SetNBDhist(1.4, 20.0);
-                std::unique_ptr<TH1F> htemp {(TH1F*)((fitter->Glauber::Fitter::GetNBDHisto()).Clone("htemp"))};
+		int Na = int(NprotonsA);
         	float nHits {0.};
-        	for (int j=0; j<Na; j++) nHits += (htemp->GetRandom());
-		
-		cout<<"Na="<<Na<<"   nhits_FW="<<nHits<<endl;
+        	for (int j=0; j<Na; j++) nHits += (htemp4->GetRandom());
+//		cout<<"B="<<B<<"   Npart="<<Npart<<"   Ncoll="<<Ncoll<<"   Na="<<Na<<"   nhits_FW="<<nHits<<endl;
         	for (int j=0; j<entries_FW; j++) {
 			Borders_FW -> GetEntry(j);
 			if (nHits>=MinBorder_FW && nHits<=MaxBorder_FW) {
@@ -587,18 +635,18 @@ void CentralityClasses(Int_t CentralityClasses){
 		}
 
 	TCanvas* c1 = new TCanvas("B_VS_Centrality_TOF","B_VS_Centrality_TOF");
-	TLegend legend1(0.1, 0.2, 0.3, 0.4, "B_VS_Centrality_TOF");
+	TLegend legend1(10, 10, 10, 10, "B_VS_Centrality_TOF");
 	for (int i = 0; i < CentralityClasses; i++) legend1.AddEntry(B_VS_CentralityHisto_TOF[i], Form("CentralityClass %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses));
 	legend1.AddEntry(B_VS_CentralityHisto_TOF[CentralityClasses], "CentralityClass 0%-100%");
-	THStack *B_VS_Centrality_TOF = new THStack("B_VS_Centrality_TOF","B_VS_Centrality_TOF");
-	for (int i = 0; i <= CentralityClasses; i++) B_VS_Centrality_TOF -> Add(B_VS_CentralityHisto_TOF[i]);
-	B_VS_Centrality_TOF -> Draw("nostack");
+	B_VS_CentralityHisto_TOF[1]->Draw();
+	for (int i = 1; i <= CentralityClasses; i++) B_VS_CentralityHisto_TOF[i]->Draw("same");
 	legend1.Draw("same");
 	c1->Write();
 	for (int i = 0; i <= CentralityClasses; i++) B_VS_CentralityHisto_TOF[i] -> Write();
+	c1->SaveAs("/home/vad/NIR_codes/Centrality/Send/B_VS_Centrality_TOF.pdf");
 
 	TCanvas* c2 = new TCanvas("Npart_VS_Centrality_TOF","Npart_VS_Centrality_TOF");
-	TLegend legend2(0.1, 0.2, 0.3, 0.4, "Npart_VS_Centrality_TOF");
+	TLegend legend2(0.4, 0.3, 0.2, 0.1, "Npart_VS_Centrality_TOF");
 	for (int i = 0; i < CentralityClasses; i++) legend2.AddEntry(Npart_VS_CentralityHisto_TOF[i], Form("CentralityClass %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses));
 	legend2.AddEntry(Npart_VS_CentralityHisto_TOF[CentralityClasses], "CentralityClass 0%-100%");
 	THStack *Npart_VS_Centrality_TOF = new THStack("Npart_VS_Centrality_TOF","Npart_VS_Centrality_TOF");
@@ -607,9 +655,10 @@ void CentralityClasses(Int_t CentralityClasses){
 	legend2.Draw("same");
 	c2->Write();
 	for (int i = 0; i <= CentralityClasses; i++) Npart_VS_CentralityHisto_TOF[i] -> Write();
+	c2->SaveAs("/home/vad/NIR_codes/Centrality/Send/Npart_VS_Centrality_TOF.pdf");
 
 	TCanvas* c3 = new TCanvas("Ncoll_VS_Centrality_TOF","Ncoll_VS_Centrality_TOF");
-	TLegend legend3(0.1, 0.2, 0.3, 0.4, "Ncoll_VS_Centrality_TOF");
+	TLegend legend3(0.4, 0.3, 0.2, 0.1, "Ncoll_VS_Centrality_TOF");
 	for (int i = 0; i < CentralityClasses; i++) legend3.AddEntry(Ncoll_VS_CentralityHisto_TOF[i], Form("CentralityClass %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses));
 	legend3.AddEntry(Ncoll_VS_CentralityHisto_TOF[CentralityClasses], "CentralityClass 0%-100%");
 	THStack *Ncoll_VS_Centrality_TOF = new THStack("Ncoll_VS_Centrality_TOF","Ncoll_VS_Centrality_TOF");
@@ -618,9 +667,10 @@ void CentralityClasses(Int_t CentralityClasses){
 	legend3.Draw("same");
 	c3->Write();
 	for (int i = 0; i <= CentralityClasses; i++) Ncoll_VS_CentralityHisto_TOF[i] -> Write();
+	c3->SaveAs("/home/vad/NIR_codes/Centrality/Send/Ncoll_VS_Centrality_TOF.pdf");
 
 	TCanvas* c4 = new TCanvas("B_VS_Centrality_RPC","B_VS_Centrality_RPC");
-	TLegend legend4(0.1, 0.2, 0.3, 0.4, "B_VS_Centrality_RPC");
+	TLegend legend4(0.4, 0.3, 0.2, 0.1, "B_VS_Centrality_RPC");
 	for (int i = 0; i < CentralityClasses; i++) legend4.AddEntry(B_VS_CentralityHisto_RPC[i], Form("CentralityClass %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses));
 	legend4.AddEntry(B_VS_CentralityHisto_RPC[CentralityClasses], "CentralityClass 0%-100%");
 	THStack *B_VS_Centrality_RPC = new THStack("B_VS_Centrality_RPC","B_VS_Centrality_RPC");
@@ -629,9 +679,10 @@ void CentralityClasses(Int_t CentralityClasses){
 	legend4.Draw("same");
 	c4->Write();
 	for (int i = 0; i <= CentralityClasses; i++) B_VS_CentralityHisto_RPC[i] -> Write();
+	c4->SaveAs("/home/vad/NIR_codes/Centrality/Send/B_VS_Centrality_RPC.pdf");
 
 	TCanvas* c5 = new TCanvas("Npart_VS_Centrality_RPC","Npart_VS_Centrality_RPC");
-	TLegend legend5(0.1, 0.2, 0.3, 0.4, "Npart_VS_Centrality_RPC");
+	TLegend legend5(0.4, 0.3, 0.2, 0.1, "Npart_VS_Centrality_RPC");
 	for (int i = 0; i < CentralityClasses; i++) legend5.AddEntry(Npart_VS_CentralityHisto_RPC[i], Form("CentralityClass %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses));
 	legend5.AddEntry(Npart_VS_CentralityHisto_RPC[CentralityClasses], "CentralityClass 0%-100%");
 	THStack *Npart_VS_Centrality_RPC = new THStack("Npart_VS_Centrality_RPC","Npart_VS_Centrality_RPC");
@@ -640,9 +691,10 @@ void CentralityClasses(Int_t CentralityClasses){
 	legend5.Draw("same");
 	c5->Write();
 	for (int i = 0; i <= CentralityClasses; i++) Npart_VS_CentralityHisto_RPC[i] -> Write();
+	c5->SaveAs("/home/vad/NIR_codes/Centrality/Send/Npart_VS_Centrality_RPC.pdf");
 
 	TCanvas* c6 = new TCanvas("Ncoll_VS_Centrality_RPC","Ncoll_VS_Centrality_RPC");
-	TLegend legend6(0.1, 0.2, 0.3, 0.4, "Ncoll_VS_Centrality_RPC");
+	TLegend legend6(0.4, 0.3, 0.2, 0.1, "Ncoll_VS_Centrality_RPC");
 	for (int i = 0; i < CentralityClasses; i++) legend6.AddEntry(Ncoll_VS_CentralityHisto_RPC[i], Form("CentralityClass %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses));
 	legend6.AddEntry(Ncoll_VS_CentralityHisto_RPC[CentralityClasses], "CentralityClass 0%-100%");
 	THStack *Ncoll_VS_Centrality_RPC = new THStack("Ncoll_VS_Centrality_RPC","Ncoll_VS_Centrality_RPC");
@@ -651,9 +703,10 @@ void CentralityClasses(Int_t CentralityClasses){
 	legend6.Draw("same");
 	c6->Write();
 	for (int i = 0; i <= CentralityClasses; i++) Ncoll_VS_CentralityHisto_RPC[i] -> Write();
+	c6->SaveAs("/home/vad/NIR_codes/Centrality/Send/Ncoll_VS_Centrality_RPC.pdf");
 
 	TCanvas* c7 = new TCanvas("B_VS_Centrality_MDC","B_VS_Centrality_MDC");
-	TLegend legend7(0.1, 0.2, 0.3, 0.4, "B_VS_Centrality_MDC");
+	TLegend legend7(0.4, 0.3, 0.2, 0.1, "B_VS_Centrality_MDC");
 	for (int i = 0; i < CentralityClasses; i++) legend7.AddEntry(B_VS_CentralityHisto_MDC[i], Form("CentralityClass %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses));
 	legend7.AddEntry(B_VS_CentralityHisto_MDC[CentralityClasses], "CentralityClass 0%-100%");
 	THStack *B_VS_Centrality_MDC = new THStack("B_VS_Centrality_MDC","B_VS_Centrality_MDC");
@@ -662,9 +715,10 @@ void CentralityClasses(Int_t CentralityClasses){
 	legend7.Draw("same");
 	c7->Write();
 	for (int i = 0; i <= CentralityClasses; i++) B_VS_CentralityHisto_MDC[i] -> Write();
+	c7->SaveAs("/home/vad/NIR_codes/Centrality/Send/B_VS_Centrality_MDC.pdf");
 
 	TCanvas* c8 = new TCanvas("Npart_VS_Centrality_MDC","Npart_VS_Centrality_MDC");
-	TLegend legend8(0.1, 0.2, 0.3, 0.4, "Npart_VS_Centrality_MDC");
+	TLegend legend8(0.4, 0.3, 0.2, 0.1, "Npart_VS_Centrality_MDC");
 	for (int i = 0; i < CentralityClasses; i++) legend8.AddEntry(Npart_VS_CentralityHisto_MDC[i], Form("CentralityClass %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses));
 	legend8.AddEntry(Npart_VS_CentralityHisto_MDC[CentralityClasses], "CentralityClass 0%-100%");
 	THStack *Npart_VS_Centrality_MDC = new THStack("Npart_VS_Centrality_MDC","Npart_VS_Centrality_MDC");
@@ -673,9 +727,10 @@ void CentralityClasses(Int_t CentralityClasses){
 	legend8.Draw("same");
 	c8->Write();
 	for (int i = 0; i <= CentralityClasses; i++) Npart_VS_CentralityHisto_MDC[i] -> Write();
+	c8->SaveAs("/home/vad/NIR_codes/Centrality/Send/Npart_VS_Centrality_MDC.pdf");
 
 	TCanvas* c9 = new TCanvas("Ncoll_VS_Centrality_MDC","Ncoll_VS_Centrality_MDC");
-	TLegend legend9(0.1, 0.2, 0.3, 0.4, "Ncoll_VS_Centrality_MDC");
+	TLegend legend9(0.4, 0.3, 0.2, 0.1, "Ncoll_VS_Centrality_MDC");
 	for (int i = 0; i < CentralityClasses; i++) legend9.AddEntry(Ncoll_VS_CentralityHisto_MDC[i], Form("CentralityClass %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses));
 	legend9.AddEntry(Ncoll_VS_CentralityHisto_MDC[CentralityClasses], "CentralityClass 0%-100%");
 	THStack *Ncoll_VS_Centrality_MDC = new THStack("Ncoll_VS_Centrality_MDC","Ncoll_VS_Centrality_MDC");
@@ -684,9 +739,10 @@ void CentralityClasses(Int_t CentralityClasses){
 	legend9.Draw("same");
 	c9->Write();
 	for (int i = 0; i <= CentralityClasses; i++) Ncoll_VS_CentralityHisto_MDC[i] -> Write();
+	c9->SaveAs("/home/vad/NIR_codes/Centrality/Send/Ncoll_VS_Centrality_MDC.pdf");
 
 	TCanvas* c10 = new TCanvas("B_VS_Centrality_FW","B_VS_Centrality_FW");
-	TLegend legend10(0.1, 0.2, 0.3, 0.4, "B_VS_Centrality_FW");
+	TLegend legend10(0.4, 0.3, 0.2, 0.1, "B_VS_Centrality_FW");
 	for (int i = 0; i < CentralityClasses; i++) legend10.AddEntry(B_VS_CentralityHisto_FW[i], Form("CentralityClass %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses));
 	legend10.AddEntry(B_VS_CentralityHisto_FW[CentralityClasses], "CentralityClass 0%-100%");
 	THStack *B_VS_Centrality_FW = new THStack("B_VS_Centrality_FW","B_VS_Centrality_FW");
@@ -695,9 +751,10 @@ void CentralityClasses(Int_t CentralityClasses){
 	legend10.Draw("same");
 	c10->Write();
 	for (int i = 0; i <= CentralityClasses; i++) B_VS_CentralityHisto_FW[i] -> Write();
+	c10->SaveAs("/home/vad/NIR_codes/Centrality/Send/B_VS_Centrality_FW.pdf");
 
 	TCanvas* c11 = new TCanvas("Npart_VS_Centrality_FW","Npart_VS_Centrality_FW");
-	TLegend legend11(0.1, 0.2, 0.3, 0.4, "Npart_VS_Centrality_FW");
+	TLegend legend11(0.4, 0.3, 0.2, 0.1, "Npart_VS_Centrality_FW");
 	for (int i = 0; i < CentralityClasses; i++) legend11.AddEntry(Npart_VS_CentralityHisto_FW[i], Form("CentralityClass %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses));
 	legend11.AddEntry(Npart_VS_CentralityHisto_FW[CentralityClasses], "CentralityClass 0%-100%");
 	THStack *Npart_VS_Centrality_FW = new THStack("Npart_VS_Centrality_FW","Npart_VS_Centrality_FW");
@@ -706,9 +763,10 @@ void CentralityClasses(Int_t CentralityClasses){
 	legend11.Draw("same");
 	c11->Write();
 	for (int i = 0; i <= CentralityClasses; i++) Npart_VS_CentralityHisto_FW[i] -> Write();
+	c11->SaveAs("/home/vad/NIR_codes/Centrality/Send/Npart_VS_Centrality_FW.pdf");
 
 	TCanvas* c12 = new TCanvas("Ncoll_VS_Centrality_FW","Ncoll_VS_Centrality_FW");
-	TLegend legend12(0.1, 0.2, 0.3, 0.4, "Ncoll_VS_Centrality_FW");
+	TLegend legend12(0.4, 0.3, 0.2, 0.1, "Ncoll_VS_Centrality_FW");
 	for (int i = 0; i < CentralityClasses; i++) legend12.AddEntry(Ncoll_VS_CentralityHisto_FW[i], Form("CentralityClass %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses));
 	legend12.AddEntry(Ncoll_VS_CentralityHisto_FW[CentralityClasses], "CentralityClass 0%-100%");
 	THStack *Ncoll_VS_Centrality_FW = new THStack("Ncoll_VS_Centrality_FW","Ncoll_VS_Centrality_FW");
@@ -717,9 +775,10 @@ void CentralityClasses(Int_t CentralityClasses){
 	legend12.Draw("same");
 	c12->Write();
 	for (int i = 0; i <= CentralityClasses; i++) Ncoll_VS_CentralityHisto_FW[i] -> Write();
+	c12->SaveAs("/home/vad/NIR_codes/Centrality/Send/Ncoll_VS_Centrality_FW.pdf");
 
 	TCanvas* c13 = new TCanvas("B_average_VS_Centrality","B_average_VS_Centrality");
-	TLegend legend13(0.1, 0.2, 0.3, 0.4, "B_average_VS_Centrality");
+	TLegend legend13(0.4, 0.3, 0.2, 0.1, "B_average_VS_Centrality");
 	legend13.AddEntry(B_average_VS_Centrality_TOF, "TOF");
 	legend13.AddEntry(B_average_VS_Centrality_RPC, "RPC");
 	legend13.AddEntry(B_average_VS_Centrality_MDC, "MDC");
@@ -730,9 +789,10 @@ void CentralityClasses(Int_t CentralityClasses){
 	B_average_VS_Centrality_FW  -> Draw("same, E1, P");
 	legend13.Draw("same");
 	c13->Write();
+	c13->SaveAs("/home/vad/NIR_codes/Centrality/Send/B_VS_Centrality.pdf");
 
 	TCanvas* c14 = new TCanvas("Npart_average_VS_Centrality","Npart_average_VS_Centrality");
-	TLegend legend14(0.1, 0.2, 0.3, 0.4, "Npart_average_VS_Centrality");
+	TLegend legend14(0.4, 0.3, 0.2, 0.1, "Npart_average_VS_Centrality");
 	legend14.AddEntry(Npart_average_VS_Centrality_TOF, "TOF");
 	legend14.AddEntry(Npart_average_VS_Centrality_RPC, "RPC");
 	legend14.AddEntry(Npart_average_VS_Centrality_MDC, "MDC");
@@ -743,9 +803,10 @@ void CentralityClasses(Int_t CentralityClasses){
 	Npart_average_VS_Centrality_FW  -> Draw("same, E1, P");
 	legend14.Draw("same");
 	c14->Write();
+	c14->SaveAs("/home/vad/NIR_codes/Centrality/Send/Npart_VS_Centrality.pdf");
 
 	TCanvas* c15 = new TCanvas("Ncoll_average_VS_Centrality","Ncoll_average_VS_Centrality");
-	TLegend legend15(0.1, 0.2, 0.3, 0.4, "Ncoll_average_VS_Centrality");
+	TLegend legend15(0.4, 0.3, 0.2, 0.1, "Ncoll_average_VS_Centrality");
 	legend15.AddEntry(Ncoll_average_VS_Centrality_TOF, "TOF");
 	legend15.AddEntry(Ncoll_average_VS_Centrality_RPC, "RPC");
 	legend15.AddEntry(Ncoll_average_VS_Centrality_MDC, "MDC");
@@ -756,50 +817,276 @@ void CentralityClasses(Int_t CentralityClasses){
 	Ncoll_average_VS_Centrality_FW  -> Draw("same, E1, P");
 	legend15.Draw("same");
 	c15->Write();
+	c15->SaveAs("/home/vad/NIR_codes/Centrality/Send/Ncoll_VS_Centrality.pdf");
 
 	TCanvas* c16 = new TCanvas("hitsTOF_VS_Centrality","hitsTOF_VS_Centrality");
-	TLegend legend16(0.1, 0.2, 0.3, 0.4, "hitsTOF_VS_Centrality");
+	TLegend legend16(0.4, 0.3, 0.2, 0.1, "hitsTOF_VS_Centrality");
 	for (int i = 0; i < CentralityClasses; i++) legend16.AddEntry(hitsTOF_VS_CentralityHisto[i], Form("CentralityClass %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses));
-//	legend16.AddEntry(hitsTOF_VS_CentralityHisto[CentralityClasses], "CentralityClass 0%-100%");
+	legend16.AddEntry(hitsTOF_VS_CentralityHisto[CentralityClasses], "CentralityClass 0%-100%");
 	THStack *hitsTOF_VS_Centrality = new THStack("hitsTOF_VS_Centrality","hitsTOF_VS_Centrality");
 	for (int i = 0; i < CentralityClasses; i++) hitsTOF_VS_Centrality -> Add(hitsTOF_VS_CentralityHisto[i]);
 	hitsTOF_VS_Centrality -> Draw("nostack");
 	legend16.Draw("same");
 	c16->Write();
 	for (int i = 0; i <= CentralityClasses; i++) hitsTOF_VS_CentralityHisto[i] -> Write();
+	c16->SaveAs("/home/vad/NIR_codes/Centrality/Send/hitsTOF_VS_Centrality.pdf");
 
 	TCanvas* c17 = new TCanvas("hitsRPC_VS_Centrality","hitsRPC_VS_Centrality");
-	TLegend legend17(0.1, 0.2, 0.3, 0.4, "hitsRPC_VS_Centrality");
+	TLegend legend17(0.4, 0.3, 0.2, 0.1, "hitsRPC_VS_Centrality");
 	for (int i = 0; i < CentralityClasses; i++) legend17.AddEntry(hitsRPC_VS_CentralityHisto[i], Form("CentralityClass %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses));
-//	legend17.AddEntry(hitsRPC_VS_CentralityHisto[CentralityClasses], "CentralityClass 0%-100%");
+	legend17.AddEntry(hitsRPC_VS_CentralityHisto[CentralityClasses], "CentralityClass 0%-100%");
 	THStack *hitsRPC_VS_Centrality = new THStack("hitsRPC_VS_Centrality","hitsRPC_VS_Centrality");
 	for (int i = 0; i < CentralityClasses; i++) hitsRPC_VS_Centrality -> Add(hitsRPC_VS_CentralityHisto[i]);
 	hitsRPC_VS_Centrality -> Draw("nostack");
 	legend17.Draw("same");
 	c17->Write();
 	for (int i = 0; i <= CentralityClasses; i++) hitsRPC_VS_CentralityHisto[i] -> Write();
+	c17->SaveAs("/home/vad/NIR_codes/Centrality/Send/hitsRPC_VS_Centrality.pdf");
 
 	TCanvas* c18 = new TCanvas("tracksMDC_VS_Centrality","tracksMDC_VS_Centrality");
-	TLegend legend18(0.1, 0.2, 0.3, 0.4, "tracksMDC_VS_Centrality");
+	TLegend legend18(0.4, 0.3, 0.2, 0.1, "tracksMDC_VS_Centrality");
 	for (int i = 0; i < CentralityClasses; i++) legend18.AddEntry(tracksMDC_VS_CentralityHisto[i], Form("CentralityClass %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses));
-//	legend18.AddEntry(tracksMDC_VS_CentralityHisto[CentralityClasses], "CentralityClass 0%-100%");
+	legend18.AddEntry(tracksMDC_VS_CentralityHisto[CentralityClasses], "CentralityClass 0%-100%");
 	THStack *tracksMDC_VS_Centrality = new THStack("tracksMDC_VS_Centrality","tracksMDC_VS_Centrality");
 	for (int i = 0; i < CentralityClasses; i++) tracksMDC_VS_Centrality -> Add(tracksMDC_VS_CentralityHisto[i]);
 	tracksMDC_VS_Centrality -> Draw("nostack");
 	legend18.Draw("same");
 	c18->Write();
 	for (int i = 0; i <= CentralityClasses; i++) tracksMDC_VS_CentralityHisto[i] -> Write();
+	c18->SaveAs("/home/vad/NIR_codes/Centrality/Send/tracksMDC_VS_Centrality.pdf");
 
 	TCanvas* c19 = new TCanvas("FWSumChargeZ_VS_Centrality","FWSumChargeZ_VS_Centrality");
-	TLegend legend19(0.1, 0.2, 0.3, 0.4, "FWSumChargeZ_VS_Centrality");
+	TLegend legend19(0.4, 0.3, 0.2, 0.1, "FWSumChargeZ_VS_Centrality");
 	for (int i = 0; i < CentralityClasses; i++) legend19.AddEntry(FWSumChargeZ_VS_CentralityHisto[i], Form("CentralityClass %.1f%%-%.1f%%", i*100.0/CentralityClasses, (i+1)*100.0/CentralityClasses));
-//	legend19.AddEntry(FWSumChargeZ_VS_CentralityHisto[CentralityClasses], "CentralityClass 0%-100%");
+	legend19.AddEntry(FWSumChargeZ_VS_CentralityHisto[CentralityClasses], "CentralityClass 0%-100%");
 	THStack *FWSumChargeZ_VS_Centrality = new THStack("FWSumChargeZ_VS_Centrality","FWSumChargeZ_VS_Centrality");
 	for (int i = 0; i < CentralityClasses; i++) FWSumChargeZ_VS_Centrality -> Add(FWSumChargeZ_VS_CentralityHisto[i]);
 	FWSumChargeZ_VS_Centrality -> Draw("nostack");
 	legend19.Draw("same");
 	c19->Write();
 	for (int i = 0; i <= CentralityClasses; i++) FWSumChargeZ_VS_CentralityHisto[i] -> Write();
+	c19->SaveAs("/home/vad/NIR_codes/Centrality/Send/FWSumChargeZ_VS_Centrality.pdf");
+
+	for (int i = 0; i < 4; i++) NBDCheck[i].SetLineColor(1);
+	for (int i = 0; i < 4; i++) NBDCheck[i].SetLineWidth(4);
+
+	TCanvas* c20 = new TCanvas("NBD_TOF","NBD_TOF");
+	TLegend legend20(0.4, 0.3, 0.2, 0.1, "NBD_TOF");
+	legend20.AddEntry(&(NBDCheck[0]), "CentralityClasses");
+	legend20.AddEntry(NBDFit[0], "Fitter");
+	NBDCheck[0].Draw();
+	NBDFit[0] -> Draw("same");
+	legend20.Draw("same");
+	c20->Write();
+	c20->SaveAs("/home/vad/NIR_codes/Centrality/Send/NBD_TOF.pdf");
+
+	TCanvas* c21 = new TCanvas("NBD_RPC","NBD_RPC");
+	TLegend legend21(0.4, 0.3, 0.2, 0.1, "NBD_RPC");
+	legend21.AddEntry(&(NBDCheck[1]), "CentralityClasses");
+	legend21.AddEntry(NBDFit[1], "Fitter");
+	NBDCheck[1].Draw();
+	NBDFit[1] -> Draw("same");
+	legend21.Draw("same");
+	c21->Write();
+	c21->SaveAs("/home/vad/NIR_codes/Centrality/Send/NBD_RPC.pdf");
+	
+	TCanvas* c22 = new TCanvas("NBD_MDC","NBD_MDC");
+	TLegend legend22(0.4, 0.3, 0.2, 0.1, "NBD_MDC");
+	legend22.AddEntry(&(NBDCheck[2]), "CentralityClasses");
+	legend22.AddEntry(NBDFit[2], "Fitter");
+	NBDCheck[2].Draw();
+	NBDFit[2] -> Draw("same");
+	legend22.Draw("same");
+	c22->Write();
+	c22->SaveAs("/home/vad/NIR_codes/Centrality/Send/NBD_MDC.pdf");
+
+	TCanvas* c23 = new TCanvas("NBD_FW","NBD_FW");
+	TLegend legend23(0.4, 0.3, 0.2, 0.1, "NBD_FW");
+	legend23.AddEntry(&(NBDCheck[3]), "CentralityClasses");
+	legend23.AddEntry(NBDFit[3], "Fitter");
+	NBDCheck[3].Draw();
+	NBDFit[3] -> Draw("same");
+	legend23.Draw("same");
+	c23->Write();
+	c23->SaveAs("/home/vad/NIR_codes/Centrality/Send/NBD_FW.pdf");
+
+	for (int i = 0; i < 4; i++) NBDCheck[i].Write();
+	for (int i = 0; i < 4; i++) NBDFit[i] -> Write();
+	for (int i = 0; i < 4; i++) NBDFit[i] -> SetLineColor(2);
+	for (int i = 0; i < 4; i++) NBDFit[i] -> SetLineWidth(4);
+
+	
+	TH1F* h11=((TH1F*)f9->Get("glaub_fit_histo"));
+	TH1F* h12=((TH1F*)f6->Get("hitsTOF_selected"));
+	TCanvas* c24 = new TCanvas("Multiplicity_Check_TOF","Multiplicity_Check_TOF");
+	TLegend legend24(0.4, 0.3, 0.2, 0.1, "Multiplicity_Check_TOF");
+	hitsTOF_VS_CentralityHisto[CentralityClasses] -> SetLineColor(1);
+	h11  -> SetLineColor(2);
+	h12 -> SetLineColor(3);
+	legend24.AddEntry(hitsTOF_VS_CentralityHisto[CentralityClasses], "CentralityClasses");
+	legend24.AddEntry(h11, "Fitter");
+	legend24.AddEntry(h12, "Data");
+	hitsTOF_VS_CentralityHisto[CentralityClasses] -> Draw();
+	h11 -> Draw("same");
+	h12 -> Draw("same");
+	legend24.Draw("same");
+	c24->Write();
+	c24->SaveAs("/home/vad/NIR_codes/Centrality/Send/Multiplicity_Check_TOF.pdf");
+
+	TH1F* h13=((TH1F*)f9->Get("fNpartHisto"));
+	TCanvas* c25 = new TCanvas("Npart_Check_TOF","Npart_Check_TOF");
+	TLegend legend25(0.4, 0.3, 0.2, 0.1, "Npart_Check_TOF");
+	Npart_VS_CentralityHisto_TOF[CentralityClasses] -> SetLineColor(1);
+	h13  -> SetLineColor(2);
+	legend25.AddEntry(hitsTOF_VS_CentralityHisto[CentralityClasses], "CentralityClasses");
+	legend25.AddEntry(h13, "RunGlauber");
+	Npart_VS_CentralityHisto_TOF[CentralityClasses] -> Draw();
+	h13 -> Draw("same");
+	legend25.Draw("same");
+	c25->Write();
+	c25->SaveAs("/home/vad/NIR_codes/Centrality/Send/Npart_Check_TOF.pdf");
+	
+	TH1F* h14=((TH1F*)f9->Get("fNcollHisto"));
+	TCanvas* c26 = new TCanvas("Ncoll_Check_TOF","Ncoll_Check_TOF");
+	TLegend legend26(0.4, 0.3, 0.2, 0.1, "Ncoll_Check_TOF");
+	Ncoll_VS_CentralityHisto_TOF[CentralityClasses] -> SetLineColor(1);
+	h14  -> SetLineColor(2);
+	legend26.AddEntry(hitsTOF_VS_CentralityHisto[CentralityClasses], "CentralityClasses");
+	legend26.AddEntry(h14, "RunGlauber");
+	Ncoll_VS_CentralityHisto_TOF[CentralityClasses] -> Draw();
+	h14 -> Draw("same");
+	legend26.Draw("same");
+	c26->Write();
+	c26->SaveAs("/home/vad/NIR_codes/Centrality/Send/Ncoll_Check_RPC.pdf");
+
+	TH1F* h21=((TH1F*)f10->Get("glaub_fit_histo"));
+	TH1F* h22=((TH1F*)f6->Get("hitsRPC_selected"));
+	TCanvas* c27 = new TCanvas("Multiplicity_Check_RPC","Multiplicity_Check_RPC");
+	TLegend legend27(0.4, 0.3, 0.2, 0.1, "Multiplicity_Check_RPC");
+	hitsRPC_VS_CentralityHisto[CentralityClasses] -> SetLineColor(1);
+	h21  -> SetLineColor(2);
+	h22 -> SetLineColor(3);
+	legend27.AddEntry(hitsRPC_VS_CentralityHisto[CentralityClasses], "CentralityClasses");
+	legend27.AddEntry(h21, "Fitter");
+	legend27.AddEntry(h22, "Data");
+	hitsRPC_VS_CentralityHisto[CentralityClasses] -> Draw();
+	h21 -> Draw("same");
+	h22 -> Draw("same");
+	legend27.Draw("same");
+	c27->Write();
+	c27->SaveAs("/home/vad/NIR_codes/Centrality/Send/Multiplicity_Check_RPC.pdf");
+
+	TH1F* h23=((TH1F*)f10->Get("fNpartHisto"));
+	TCanvas* c28 = new TCanvas("Npart_Check_RPC","Npart_Check_RPC");
+	TLegend legend28(0.4, 0.3, 0.2, 0.1, "Npart_Check_RPC");
+	Npart_VS_CentralityHisto_RPC[CentralityClasses] -> SetLineColor(1);
+	h23  -> SetLineColor(2);
+	legend28.AddEntry(hitsRPC_VS_CentralityHisto[CentralityClasses], "CentralityClasses");
+	legend28.AddEntry(h23, "RunGlauber");
+	Npart_VS_CentralityHisto_RPC[CentralityClasses] -> Draw();
+	h23 -> Draw("same");
+	legend28.Draw("same");
+	c28->Write();
+	c28->SaveAs("/home/vad/NIR_codes/Centrality/Send/Npart_Check_RPC.pdf");
+
+	TH1F* h24=((TH1F*)f10->Get("fNcollHisto"));	
+	TCanvas* c29 = new TCanvas("Ncoll_Check_RPC","Ncoll_Check_RPC");
+	TLegend legend29(0.4, 0.3, 0.2, 0.1, "Ncoll_Check_RPC");
+	Ncoll_VS_CentralityHisto_RPC[CentralityClasses] -> SetLineColor(1);
+	h24  -> SetLineColor(2);
+	legend29.AddEntry(hitsRPC_VS_CentralityHisto[CentralityClasses], "CentralityClasses");
+	legend29.AddEntry(h24, "RunGlauber");
+	Ncoll_VS_CentralityHisto_RPC[CentralityClasses] -> Draw();
+	h24 -> Draw("same");
+	legend29.Draw("same");
+	c29->Write();
+	c29->SaveAs("/home/vad/NIR_codes/Centrality/Send/Ncoll_Check_RPC.pdf");
+
+	TH1F* h31=((TH1F*)f11->Get("glaub_fit_histo"));
+	TH1F* h32=((TH1F*)f6->Get("hitsRPC_selected"));
+	TCanvas* c30 = new TCanvas("Multiplicity_Check_MDC","Multiplicity_Check_MDC");
+	TLegend legend30(0.4, 0.3, 0.2, 0.1, "Multiplicity_Check_MDC");
+	tracksMDC_VS_CentralityHisto[CentralityClasses] -> SetLineColor(1);
+	h31  -> SetLineColor(2);
+	h32 -> SetLineColor(3);
+	legend30.AddEntry(tracksMDC_VS_CentralityHisto[CentralityClasses], "CentralityClasses");
+	legend30.AddEntry(h31, "Fitter");
+	legend30.AddEntry(h32, "Data");
+	tracksMDC_VS_CentralityHisto[CentralityClasses] -> Draw();
+	h31 -> Draw("same");
+	h32 -> Draw("same");
+	legend30.Draw("same");
+	c30->Write();
+	c30->SaveAs("/home/vad/NIR_codes/Centrality/Send/Multiplicity_Check_MDC.pdf");
+
+	TH1F* h33=((TH1F*)f11->Get("fNpartHisto"));
+	TCanvas* c31 = new TCanvas("Npart_Check_MDC","Npart_Check_MDC");
+	TLegend legend31(0.4, 0.3, 0.2, 0.1, "Npart_Check_MDC");
+	Npart_VS_CentralityHisto_MDC[CentralityClasses] -> SetLineColor(1);
+	h33  -> SetLineColor(2);
+	legend31.AddEntry(tracksMDC_VS_CentralityHisto[CentralityClasses], "CentralityClasses");
+	legend31.AddEntry(h33, "RunGlauber");
+	Npart_VS_CentralityHisto_MDC[CentralityClasses] -> Draw();
+	h33 -> Draw("same");
+	legend31.Draw("same");
+	c31->Write();
+	c31->SaveAs("/home/vad/NIR_codes/Centrality/Send/Npart_Check_MDC.pdf");
+
+	TH1F* h34=((TH1F*)f11->Get("fNcollHisto"));	
+	TCanvas* c32 = new TCanvas("Ncoll_Check_MDC","Ncoll_Check_MDC");
+	TLegend legend32(0.4, 0.3, 0.2, 0.1, "Ncoll_Check_MDC");
+	Ncoll_VS_CentralityHisto_MDC[CentralityClasses] -> SetLineColor(1);
+	h34  -> SetLineColor(2);
+	legend32.AddEntry(tracksMDC_VS_CentralityHisto[CentralityClasses], "CentralityClasses");
+	legend32.AddEntry(h34, "RunGlauber");
+	Ncoll_VS_CentralityHisto_MDC[CentralityClasses] -> Draw();
+	h34 -> Draw("same");
+	legend32.Draw("same");
+	c32->Write();
+	c32->SaveAs("/home/vad/NIR_codes/Centrality/Send/Ncoll_Check_MDC.pdf");
+
+	TH1F* h41=((TH1F*)f12->Get("glaub_fit_histo"));
+	TH1F* h42=((TH1F*)f6->Get("FWSumChargeZ_selected"));
+	TCanvas* c33 = new TCanvas("Multiplicity_Check_FW","Multiplicity_Check_FW");
+	TLegend legend33(0.4, 0.3, 0.2, 0.1, "Multiplicity_Check_FW");
+	FWSumChargeZ_VS_CentralityHisto[CentralityClasses] -> SetLineColor(1);
+	h41  -> SetLineColor(2);
+	h42 -> SetLineColor(3);
+	legend33.AddEntry(FWSumChargeZ_VS_CentralityHisto[CentralityClasses], "CentralityClasses");
+	legend33.AddEntry(h41, "Fitter");
+	legend33.AddEntry(h42, "Data");
+	FWSumChargeZ_VS_CentralityHisto[CentralityClasses] -> Draw();
+	h41 -> Draw("same");
+	h42 -> Draw("same");
+	legend33.Draw("same");
+	c33->Write();
+	c33->SaveAs("/home/vad/NIR_codes/Centrality/Send/Multiplicity_Check_FW.pdf");
+
+	TH1F* h43=((TH1F*)f12->Get("fNpartHisto"));
+	TCanvas* c34 = new TCanvas("Npart_Check_FW","Npart_Check_FW");
+	TLegend legend34(0.4, 0.3, 0.2, 0.1, "Npart_Check_FW");
+	Npart_VS_CentralityHisto_FW[CentralityClasses] -> SetLineColor(1);
+	h43  -> SetLineColor(2);
+	legend34.AddEntry(FWSumChargeZ_VS_CentralityHisto[CentralityClasses], "CentralityClasses");
+	legend34.AddEntry(h43, "RunGlauber");
+	Npart_VS_CentralityHisto_FW[CentralityClasses] -> Draw();
+	h43 -> Draw("same");
+	legend34.Draw("same");
+	c34->Write();
+	c34->SaveAs("/home/vad/NIR_codes/Centrality/Send/Npart_Check_FW.pdf");
+	
+	TH1F* h44=((TH1F*)f12->Get("fNcollHisto"));
+	TCanvas* c35 = new TCanvas("Ncoll_Check_FW","Ncoll_Check_FW");
+	TLegend legend35(0.4, 0.3, 0.2, 0.1, "Ncoll_Check_FW");
+	Ncoll_VS_CentralityHisto_FW[CentralityClasses] -> SetLineColor(1);
+	h44  -> SetLineColor(2);
+	legend35.AddEntry(FWSumChargeZ_VS_CentralityHisto[CentralityClasses], "CentralityClasses");
+	legend35.AddEntry(h44, "RunGlauber");
+	Ncoll_VS_CentralityHisto_FW[CentralityClasses] -> Draw();
+	h44 -> Draw("same");
+	legend35.Draw("same");
+	c35->Write();
+	c35->SaveAs("/home/vad/NIR_codes/Centrality/Send/Ncoll_Check_FW.pdf");
 
 	B_average_VS_Centrality         -> Write();
 	Npart_average_VS_Centrality     -> Write();
@@ -819,5 +1106,5 @@ void CentralityClasses(Int_t CentralityClasses){
 	
 	Result->Write();
 
-	f->Close();
+	fOut->Close();
 }
