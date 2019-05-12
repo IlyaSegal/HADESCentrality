@@ -37,41 +37,43 @@ int main(int argc, char *argv[])
     ///  |   PSD     | Nprotons in spectators |
     ///  |   Npart   |     Npart^f            |
     ///  |   Ncoll   |     Ncoll^f            |
-    const TString mode = "Default";
-//    const TString mode = "PSD";
+//    const TString mode = "Default";
+    const TString mode = "PSD";
     
-    const TString glauber_filename = "/home/vad/NIR_codes/Centrality/gmc-Au3Au3-snn23.6-md0.4-nd-1.0-rc1-smax99.0_1000000.root";   // input files
-//    const TString glauber_filename = "/home/vad/NIR_codes/Centrality/2.root";
-    TString glauber_treename;
-    glauber_treename = "nt_Au3_Au3";
-    if (mode == "PSD") glauber_treename = "HADES_FW";
-    const TString in_filename = "/home/vad/NIR_codes/QAHistoBuilder/QASelectedPT2Histos.root";
+    const TString glauber_filename    = "/home/vad/NIR_codes/Centrality/1.root";   // input files
+    const TString glauber_filename_FW = "/home/vad/NIR_codes/Centrality/2.root";
+    TString glauber_treename    = "nt_Au3_Au3";
+    TString glauber_treename_FW = "HADES_FW";
+    const TString in_filename = "/home/vad/NIR_codes/QAHistoBuilder/QASelectedPT2Histos_FW.root";
 
 //    const TString histoname = "tracksMDC_selected";
 //    const TString histoname = "hitsTOF_selected";
-    const TString histoname = "hitsRPC_selected";
+//    const TString histoname = "hitsRPC_selected";
 //    const TString histoname = "hitsTOF+RPC_selected";
-//    const TString histoname = "FWSumChargeZ_selected";
+    const TString histoname = "FWSumChargeZ_selected";
 
 
-    const Int_t min_bin = 100;      // not fitting low multiplicity region due to trigger bias, etc
-    const Int_t max_bin = 188;   // very large number to fit the whole histo
-    double alpha = 1.64e-6;
-    
+    const Int_t min_bin = 8;      // not fitting low multiplicity region due to trigger bias, etc
+    const Int_t max_bin = 25;   // very large number to fit the whole histo
+    double alpha = 0;
+
+    std::cout << "min_bin=" << min_bin << "   max_bin=" << max_bin << std::endl;
 
     const TString outdir = ".";
     // *****************************************
     // *****************************************
 
     std::unique_ptr<TFile> glauber_file{ TFile::Open(glauber_filename, "read") };
+    std::unique_ptr<TFile> glauber_file_FW{ TFile::Open(glauber_filename_FW, "read") };
     std::unique_ptr<TTree> glauber_tree{ (TTree*) glauber_file->Get(glauber_treename) };
+    std::unique_ptr<TTree> glauber_tree_FW{ (TTree*) glauber_file_FW->Get(glauber_treename_FW) };
     
     std::unique_ptr<TFile> f{TFile::Open(in_filename)};    
     TH1F *hdata = (TH1F*)f->Get(histoname);
-    const Int_t nevents = 10*(int(hdata->Integral(min_bin,max_bin)));
-//    const Int_t nevents = 99999;
+//    const Int_t nevents = 10*(int(hdata->Integral(min_bin,max_bin)));
+    const Int_t nevents = 99999;
 
-    Fitter fitter ( std::move(glauber_tree), mode );
+    Fitter fitter ( std::move(glauber_tree), std::move(glauber_tree_FW) );
 
     fitter.SetMode(mode);
     fitter.SetMassNumber(f0/2);
@@ -93,7 +95,7 @@ int main(int argc, char *argv[])
     
 //    Glauber::DrawHistos(fitter, true, true, true, true);
 
-    DrawHistos(fitter, true, true, true, true);
+    DrawHistos(fitter, par, alpha, chi2, true, true, true, true);
 
     const float range[2] = {300, 350.};
     std::unique_ptr<TH1F> hB(fitter.GetModelHisto (range, "B", par, 100000));

@@ -12,6 +12,7 @@
 #include "TString.h"
 #include "TNamed.h"
 #include "TH1F.h"
+#include "TH2F.h"
 #include "TTree.h"
 // #include "TMinuit.h"
 
@@ -25,7 +26,7 @@ namespace Glauber
         
         /**   Default constructor   **/
         Fitter() {};
-        Fitter(std::unique_ptr<TTree> tree, TString fmode) ;
+        Fitter(std::unique_ptr<TTree> tree, std::unique_ptr<TTree> tree_FW) ;
         /**   Destructor   **/
         virtual ~Fitter(){};
         
@@ -73,18 +74,27 @@ namespace Glauber
         TH1F GetDataHisto ()       const { return fDataHisto;  }
         TH1F GetNBDHisto ()        const { return fNbdHisto;   }
 //	TH1F GetFWHisto ()         const { return fFWHisto;   }
+	TH1F GetBHisto ()          const { return fBHisto; }
         TH1F GetNpartHisto ()      const { return fNpartHisto; }
 	TH1F GetNpartAHisto ()     const { return fNpartAHisto; }
         TH1F GetNcollHisto ()      const { return fNcollHisto;  }
 	TH1F GetNprotonsAHisto ()  const { return fNprotonsAHisto;  }
         TH1F GetNspecAHisto ()     const { return fNspecAHisto;  }
-        TH1F GetBestFiHisto ()     const { return fBestFitHisto;  }
+        TH1F GetBestFitHisto ()     const { return fBestFitHisto;  }
+
+	TH2F GetB_VS_Multiplicity ()     const { return fB_VS_Multiplicity; }
+	TH2F GetNpart_VS_Multiplicity () const { return fNpart_VS_Multiplicity; }
+	TH2F GetNcoll_VS_Multiplicity () const { return fNcoll_VS_Multiplicity; }
+	TH2F GetBestB_VS_Multiplicity ()     const { return fBestB_VS_Multiplicity; }
+	TH2F GetBestNpart_VS_Multiplicity () const { return fBestNpart_VS_Multiplicity; }
+	TH2F GetBestNcoll_VS_Multiplicity () const { return fBestNcoll_VS_Multiplicity; }
 
         
     private:
         
         /**   Data members  **/
-        TH1F fNpartHisto;
+        TH1F fBHisto;
+	TH1F fNpartHisto;
         TH1F fNprotonsAHisto;
         TH1F fNspecAHisto;
 	TH1F fNpartAHisto; 
@@ -94,11 +104,21 @@ namespace Glauber
 //	TH1F fFWHisto; 
         TH1F fGlauberFitHisto; 
         TH1F fBestFitHisto;
+
+	TH2F fB_VS_Multiplicity;
+	TH2F fNpart_VS_Multiplicity;
+	TH2F fNcoll_VS_Multiplicity;
+	TH2F fBestB_VS_Multiplicity;
+	TH2F fBestNpart_VS_Multiplicity;
+	TH2F fBestNcoll_VS_Multiplicity;
+	
         
         /* MC data */
         std::unique_ptr<TTree> fSimTree{nullptr};
+	std::unique_ptr<TTree> fSimTree_FW{nullptr};
         
 	Float_t fA{-1.}; //mass number
+	Float_t fB{-1.};
         Float_t fNpart{-1.};
 	Float_t fNpartA{-1.};
         Float_t fNcoll{-1.};

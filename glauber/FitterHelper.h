@@ -9,6 +9,7 @@
 
 #include "/home/vad/ROOT/root/include/TCanvas.h"
 #include "/home/vad/ROOT/root/include/TH1.h"
+#include "/home/vad/ROOT/root/include/TH2.h"
 #include "/home/vad/ROOT/root/include/TPad.h"
 #include "/home/vad/ROOT/root/include/TLegend.h"
 #include "/home/vad/ROOT/root/include/TFile.h"
@@ -18,7 +19,7 @@
 
 namespace Glauber
 {
-    inline void DrawHistos (const Fitter& fit, Bool_t isSim, Bool_t isData, Bool_t isGlauber, Bool_t isNBD)
+    inline void DrawHistos (const Fitter& fit, float par[4], float alpha, float chi2, Bool_t isSim, Bool_t isData, Bool_t isGlauber, Bool_t isNBD)
     {
         std::unique_ptr <TCanvas> c1 {new TCanvas("c1", "canvas", 1500, 900)};
 
@@ -37,7 +38,11 @@ namespace Glauber
         /*const*/ TH1F hNBD = fit.GetNBDHisto();
         /*const*/ TH1F hNcoll = fit.GetNcollHisto();
         /*const*/ TH1F hNpart = fit.GetNpartHisto();
-        /*const*/ TH1F hBestFit = fit.GetBestFiHisto();
+        /*const*/ TH1F hBestFit = fit.GetBestFitHisto();
+
+		  TH2F hBestB_VS_Multiplicity=fit.GetBestB_VS_Multiplicity();
+		  TH2F hBestNpart_VS_Multiplicity=fit.GetBestNpart_VS_Multiplicity();
+		  TH2F hBestNcoll_VS_Multiplicity=fit.GetBestNcoll_VS_Multiplicity();
 
         std::unique_ptr <TFile> fOut{TFile::Open("glauber_qa.root", "recreate")}; 
 
@@ -70,6 +75,9 @@ namespace Glauber
                 legData->AddEntry(&hData ,"Data", "l");    
                 legData->Draw("same");   
                 hBestFit.Write();
+		hBestB_VS_Multiplicity.Write();
+		hBestNpart_VS_Multiplicity.Write();
+		hBestNcoll_VS_Multiplicity.Write();
             }
         }
         
@@ -84,6 +92,20 @@ namespace Glauber
             c1->cd(4);
             hBestFit.Draw();
         }
+
+	TTree *BestResult=new TTree("BestResult", "BestResult");
+	Float_t mu, f, k, chi2_error;
+	BestResult -> Branch("mu", &mu);
+    	BestResult -> Branch("f", &f);
+    	BestResult -> Branch("k", &k);
+    	BestResult -> Branch("alpha", &alpha);
+    	BestResult -> Branch("chi2", &chi2);
+    	BestResult -> Branch("chi2_error", &chi2_error);
+
+    	mu=par[1]; f=par[0]; k=par[2]; chi2_error=par[3];
+
+    	BestResult -> Fill();
+	BestResult -> Write();
 
         c1->Write();
         c1->SaveAs("glauber.pdf");

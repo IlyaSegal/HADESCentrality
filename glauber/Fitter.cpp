@@ -11,68 +11,73 @@
 ClassImp(Glauber::Fitter)
 
 // -----   Default constructor   -------------------------------------------
-Glauber::Fitter::Fitter(std::unique_ptr<TTree> tree, TString fmode) 
+Glauber::Fitter::Fitter(std::unique_ptr<TTree> tree, std::unique_ptr<TTree> tree_FW) 
 {
-    fSimTree = std::move(tree);    
+    fSimTree = std::move(tree); 
+    fSimTree_FW = std::move(tree_FW);   
     std::cout << fSimTree->GetEntries() << std::endl;
     
     if (!fSimTree) {
         std::cout << "SetSimHistos: *** Error - " << std::endl;
         exit(EXIT_FAILURE);
     }
+	
+    if (!fSimTree_FW) {
+        std::cout << "SetSimHistos: *** Error - " << std::endl;
+        exit(EXIT_FAILURE);
+    }
     
-    if (fmode=="PSD") {
-	fSimTree->SetBranchAddress("NprotonsA",  &fNprotonsA);
-    	fSimTree->SetBranchAddress("NspecA", &fNspecA);
-    	}
-    else {	
-	fSimTree->SetBranchAddress("Npart",  &fNpart);
-    	fSimTree->SetBranchAddress("NpartA", &fNpartA);
-    	fSimTree->SetBranchAddress("Ncoll",  &fNcoll);
-	}
+    fSimTree_FW->SetBranchAddress("NprotonsA",  &fNprotonsA);
+    fSimTree_FW->SetBranchAddress("NspecA", &fNspecA);
+    fSimTree->SetBranchAddress("B",  &fB);
+    fSimTree->SetBranchAddress("Npart",  &fNpart);
+    fSimTree->SetBranchAddress("NpartA", &fNpartA);
+    fSimTree->SetBranchAddress("Ncoll",  &fNcoll);
 }
 
 void Glauber::Fitter::Init(int nEntries, TString fmode)
 {
+
     if ( nEntries < 0 || nEntries > fSimTree->GetEntries() ){
         std::cout << "Init: *** ERROR - number of entries < 0 or less that number of entries in input tree" << std::endl;
         std::cout << "Init: *** number of entries in input tree = " << fSimTree->GetEntries() << std::endl;        
         exit(EXIT_FAILURE);
     }
     
-    if (fmode=="PSD") {
-	const int NprotonsAMax  = int (fSimTree->GetMaximum("NprotonsA") );
-    	const int NspecAMax = int (fSimTree->GetMaximum("NspecA") );
-    	
-    	fNprotonsAHisto  = TH1F ("fNprotonsAHisto",  "NprotonsA",  NprotonsAMax/fBinSize,  0, NprotonsAMax );
-    	fNspecAHisto = TH1F ("fNspecAHisto", "NspecA", NspecAMax/fBinSize, 0, NspecAMax );
-    	
-    	for (int i=0; i<nEntries; i++)
-    		{
-        	fSimTree->GetEntry(i);
-        	fNprotonsAHisto.Fill(fNprotonsA);
-        	fNspecAHisto.Fill(fNspecA);
-    		}
-    	std::cout << fSimTree->GetEntries() << std::endl;
-	}
-    else {
-    	const int NpartMax  = int (fSimTree->GetMaximum("Npart") );
-    	const int NpartAMax = int (fSimTree->GetMaximum("NpartA") );
-    	const int NcollMax  = int (fSimTree->GetMaximum("Ncoll") );
-    	
-    	fNpartHisto  = TH1F ("fNpartHisto",  "Npart",  NpartMax/fBinSize,  0, NpartMax );
-    	fNpartAHisto = TH1F ("fNpartAHisto", "NpartA", NpartAMax/fBinSize, 0, NpartAMax );
-    	fNcollHisto  = TH1F ("fNcollHisto",  "Ncoll",  NcollMax/fBinSize,  0, NcollMax );
-    	
-    	for (int i=0; i<nEntries; i++)
-    		{
-        	fSimTree->GetEntry(i);
-        	fNcollHisto.Fill(fNcoll);
-        	fNpartHisto.Fill(fNpart);
-		fNpartAHisto.Fill(fNpartA);
-    		}
-    	std::cout << fSimTree->GetEntries() << std::endl;
-	}
+    const int NprotonsAMax  = int (fSimTree_FW->GetMaximum("NprotonsA") );
+    const int NspecAMax = int (fSimTree_FW->GetMaximum("NspecA") );
+    
+    fNprotonsAHisto  = TH1F ("fNprotonsAHisto",  "NprotonsA",  NprotonsAMax/fBinSize,  0, NprotonsAMax );
+    fNspecAHisto = TH1F ("fNspecAHisto", "NspecA", NspecAMax/fBinSize, 0, NspecAMax );
+    
+    for (int i=0; i<(fSimTree_FW->GetEntries()); i++)
+    	{
+      	fSimTree_FW->GetEntry(i);
+       	fNprotonsAHisto.Fill(fNprotonsA);
+       	fNspecAHisto.Fill(fNspecA);
+    	}
+    std::cout << fSimTree_FW->GetEntries() << std::endl;
+
+    const int BMax  = int (fSimTree->GetMaximum("B") );
+    const int NpartMax  = int (fSimTree->GetMaximum("Npart") );
+    const int NpartAMax = int (fSimTree->GetMaximum("NpartA") );
+    const int NcollMax  = int (fSimTree->GetMaximum("Ncoll") );
+    
+    fBHisto      = TH1F ("fBHisto",  "B",  BMax/fBinSize,  0, BMax );
+    fNpartHisto  = TH1F ("fNpartHisto",  "Npart",  NpartMax/fBinSize,  0, NpartMax );
+    fNpartAHisto = TH1F ("fNpartAHisto", "NpartA", NpartAMax/fBinSize, 0, NpartAMax );
+    fNcollHisto  = TH1F ("fNcollHisto",  "Ncoll",  NcollMax/fBinSize,  0, NcollMax );
+    
+    for (int i=0; i<nEntries; i++)
+    	{
+       	fSimTree->GetEntry(i);
+	fBHisto.Fill(fB);
+       	fNcollHisto.Fill(fNcoll);
+       	fNpartHisto.Fill(fNpart);
+	fNpartAHisto.Fill(fNpartA);
+    	}
+    std::cout << fSimTree->GetEntries() << std::endl;
+
 
     fNbins = fDataHisto.GetNbinsX();
 
@@ -121,7 +126,13 @@ float Glauber::Fitter::NancestorsMax(float f) const
 void Glauber::Fitter::SetGlauberFitHisto (float f, float mu, float k, int n, double alpha, Bool_t Norm2Data)
 {    
     fGlauberFitHisto = TH1F("glaub", "", fNbins*1.3, 0, 1.3*fMaxValue);
+    fB_VS_Multiplicity = TH2F("", ";B, fm;nHits", fNbins*1.3, 0, 1.3*fMaxValue, 200, 0, 20);
+    fNpart_VS_Multiplicity = TH2F("", ";Npart;nHits", fNbins*1.3, 0, 1.3*fMaxValue, 450, 0, 450);
+    fNcoll_VS_Multiplicity = TH2F("", ";Ncoll;nHits", fNbins*1.3, 0, 1.3*fMaxValue, 750, 0, 750);
     fGlauberFitHisto.SetName("glaub_fit_histo");
+    fB_VS_Multiplicity.SetName("B_VS_Multiplicity");
+    fNpart_VS_Multiplicity.SetName("Npart_VS_Multiplicity");
+    fNcoll_VS_Multiplicity.SetName("Ncoll_VS_Multiplicity");
     
     SetNBDhist(mu,  k);
 
@@ -129,6 +140,7 @@ void Glauber::Fitter::SetGlauberFitHisto (float f, float mu, float k, int n, dou
     for (int i=0; i<n; i++)
     {
         fSimTree->GetEntry(i);
+	fSimTree_FW->GetEntry(i);
         const int Na = int(Nancestors(f));
                 
         float nHits {0.};
@@ -254,10 +266,17 @@ float Glauber::Fitter::FitGlauber (float *par, Float_t f0, Float_t f1, Int_t k0,
     TTree* tree {new TTree("test_tree", "tree" )};
     
     TH1F h1("h1", "", fNbins, 0, fMaxValue);
+
+    TH2F h2("h2", ";B, fm;nHits", fNbins, 0, fMaxValue, 200, 0, 20);
+    TH2F h3("h3", ";Npart;nHits", fNbins, 0, fMaxValue, 450, 0, 450);
+    TH2F h4("h4", ";Ncoll;nHits", fNbins, 0, fMaxValue, 750, 0, 750);
            
     float f, mu, k, chi2, chi2_error, sigma;
 
-    tree->Branch("histo", "TH1F", &h1);
+    tree->Branch("histo1", "TH1F", &h1);
+    tree->Branch("histo2", "TH2F", &h2);
+    tree->Branch("histo3", "TH2F", &h3);
+    tree->Branch("histo4", "TH2F", &h4);
     tree->Branch("f",    &f,    "f/F");   
     tree->Branch("mu",   &mu,   "mu/F");   
     tree->Branch("k",    &k,    "k/F");   
@@ -280,6 +299,9 @@ float Glauber::Fitter::FitGlauber (float *par, Float_t f0, Float_t f1, Int_t k0,
 		n=n+10;
 		sigma = ( mu/k + 1 ) * mu;
 		h1 = fGlauberFitHisto;
+		h2 = fB_VS_Multiplicity;
+		h3 = fNpart_VS_Multiplicity;
+		h4 = fNcoll_VS_Multiplicity;
 		
 		tree->Fill();
 		
@@ -291,6 +313,9 @@ float Glauber::Fitter::FitGlauber (float *par, Float_t f0, Float_t f1, Int_t k0,
 		    Chi2Min = chi2;
 		    Chi2Min_error = chi2_error;
 		    fBestFitHisto = fGlauberFitHisto;
+		    fBestB_VS_Multiplicity=fB_VS_Multiplicity;
+	 	    fBestNpart_VS_Multiplicity=fNpart_VS_Multiplicity;
+	 	    fBestNcoll_VS_Multiplicity=fNcoll_VS_Multiplicity;
 		}            
 
 	    } 
@@ -458,208 +483,3 @@ std::unique_ptr<TH1F> Glauber::Fitter::GetModelHisto (const float range[2], TStr
     return std::move(hModel);
     
 }
-
-
-/*
-
-/**
- * Find the best match
- *
- * @param return value of best fit parameters
- * @param f0=f1=A, where A-mass number
- * @param k0 lower search edge for probability of finding a proton multiplied by 10
- * @param k1 upper search edge for probability of finding a proton multiplied by 10
- * @param nEvents
- 
-float Glauber::Fitter::FitFW (float *par, Float_t f0, Float_t f1, Int_t k0,  Int_t k1, Int_t nEvents)
-{
-    float f_fit{-1};
-    float mu_fit{-1}; 
-    float k_fit{-1};
-    float Chi2Min {1e10};
-
-    const TString filename = "fit_FW.root";
-    
-//     std::unique_ptr<TFile> file {TFile::Open(filename, "recreate")};    
-//     std::unique_ptr<TTree> tree {new TTree("test_tree", "tree" )};
-
-    TFile* file {TFile::Open(filename, "recreate")};    
-    TTree* tree {new TTree("test_tree", "tree" )};
-    
-    TH1F h1("h1", "", fNbins, 0, fMaxValue);
-           
-    float f, mu, k, chi2, sigma;
-
-    tree->Branch("histo", "TH1F", &h1);
-    tree->Branch("f",    &f,    "f/F");   
-    tree->Branch("mu",   &mu,   "mu/F");   
-    tree->Branch("k",    &k,    "k/F");   
-    tree->Branch("chi2", &chi2, "chi2/F");   
-    tree->Branch("sigma",&sigma,"sigma/F");   
-
-    int n=1;
-    for (float i=f0; i<=f1; i=i+0.010000)
-    {
-	    f=i;
-	    for (int j=k0; j<=k1; j++)
-	    {
-		mu = fMaxValue/2;
-		k = 0.1*j;
-		const float mu_min = 0.7*mu;
-		const float mu_max = 1.0*mu;
-
-		FindMuFWGoldenSection (&mu, &chi2, mu_min, mu_max, f, k, nEvents, 10, n);
-		n=n+10;
-		sigma = k * mu;
-		h1 = fGlauberFitHisto;
-		
-		tree->Fill();
-		
-		if (chi2 < Chi2Min)
-		{
-		    f_fit = f;
-		    mu_fit = mu;
-		    k_fit = k;
-		    Chi2Min = chi2;
-		    fBestFitHisto = fGlauberFitHisto;
-		}            
-
-	    } 
-    }
-
-    tree->Write();
-    file->Write();
-    file->Close();
-
-    par[0] = f_fit;
-    par[1] = mu_fit;
-    par[2] = k_fit;
-    
-    return Chi2Min;
-}
-
-
-/**
- *
- * @param mu mean value of binominal distribution for FW (we are looking for it)
- * @param chi2 return value (indicates good match)
- * @param mu_min lower search edge for mean value
- * @param mu_max upper search edge for mean value
- * @param f parameter of Na (mass number of projectile and target nucleus)
- * @param k parameter of binominal distribution for FW
- * @param nEvents
- * @param nIter
- 
-void Glauber::Fitter::FindMuFWGoldenSection (float *mu, float *chi2, float mu_min, float mu_max, float f, float k, int nEvents, int nIter, int n)
-{
-    const float phi {(1+TMath::Sqrt(5))/2};
-
-    /* left 
-    float mu_1 = mu_max - (mu_max-mu_min)/phi;
-
-    /* right 
-    float mu_2 = mu_min + (mu_max-mu_min)/phi;
-    
-    SetGlauberFitHistoFW (f, mu_1, k, nEvents);
-    float chi2_mu1 = GetChi2 ();
-    
-    SetGlauberFitHistoFW (f, mu_2, k, nEvents);
-    float chi2_mu2 = GetChi2 ();
-    
-    for (int j=0; j<nIter; j++)
-    {        
-        if (chi2_mu1 > chi2_mu2)
-        {
-            mu_min = mu_1;
-            mu_1 = mu_2;
-            mu_2 = mu_min + (mu_max-mu_min)/phi;
-            chi2_mu1 = chi2_mu2;
-            SetGlauberFitHistoFW (f, mu_2, k, nEvents);
-            chi2_mu2 = GetChi2 ();
-        }
-        else
-        {
-            mu_max = mu_2;
-            mu_2 = mu_1;
-            mu_1 = mu_max - (mu_max-mu_min)/phi; 
-            chi2_mu2 = chi2_mu1;
-            SetGlauberFitHistoFW (f, mu_1, k, nEvents);
-            chi2_mu1 = GetChi2 ();            
-        }
-        
-        std::cout << "n = " << n+j << " f = "  << f << " k = " << k << " mu1 = " << mu_1 << " mu2 = " << mu_2 << " chi2_mu1 = " << chi2_mu1  << " chi2_mu2 = " << chi2_mu2 << std::endl;
-    }
-
-    /* take min(mu) 
-    *mu = (chi2_mu1 < chi2_mu2) ? mu_1 : mu_2;
-    /* take min(chi2) 
-    *chi2 = (chi2_mu1 < chi2_mu2) ? chi2_mu1 : chi2_mu2;
-}
-
-/*
- * take Glauber MC data from fSimTree
- * Populate fGlauberFitHisto with number of protons in Na
-
-void Glauber::Fitter::SetGlauberFitHistoFW (float f, float mu, float k, int n, float alpha, Bool_t Norm2Data)
-{    
-    fGlauberFitHisto = TH1F("glaub", "", fNbins*1.3, 0, 1.3*fMaxValue);
-    fGlauberFitHisto.SetName("glaub_fit_histo");
-    
-    SetFWhist(mu, k, f);
-
-    std::unique_ptr<TH1F> htemp {(TH1F*)fFWHisto.Clone("htemp")}; // WTF??? Not working without pointer
-    for (int i=0; i<n; i++)
-    {
-        fSimTree->GetEntry(i);
-//	std::cout<<"i="<<i<<"  fNpartA="<<fNpartA<<std::endl;
-        const int Na = int(Nancestors(f));
-//	std::cout<<"i="<<i<<"  Na="<<Na<<std::endl;        
-        float nCharge {0.};
-        nCharge = (int(htemp->GetRandom()));
-//	std::cout<<"i="<<i<<"  nCharge="<<nCharge<<std::endl;
-        fGlauberFitHisto.Fill(nCharge);
-    }
-    if (Norm2Data)
-        NormalizeGlauberFit();
-}
-
-/**
- * Populates histogram FW_<mean>_<k> with values of binomial distribution for FW
- * @param mu
- * @param k
- 
-void Glauber::Fitter::SetFWhist(float mu, float k, float f)
-{
-    // Interface for TH1F.
-    const int nBins = 200;
-    
-    fFWHisto = TH1F ("fFWHisto", "", nBins, 0, nBins);
-    fFWHisto.SetName("FW");
-    
-    for (int i=0; i<nBins; ++i) 
-    {
-        const double val = FW(i, k, f);
-//	std::cout<<"i="<<i<<"  val="<<val<<std::endl;
-        if (i<=79) fFWHisto.SetBinContent(i+1, val);
-//        std::cout << "val " << val << std::endl;    
-    }
-    fFWHisto.Scale(1/(fFWHisto.Integral(1,nBins)));
-//    std::cout << "S=" << fFWHisto.Integral(1,nBins) << std::endl; 
-}
-
-/**
- * Binomial Distribution for FW
- * @param n argument
- * @param k argument
- * @param f argument of Nancestors
- * @return BD for a given parameters
-
-double Glauber::Fitter::FW(float n, float k, float f) const
-{
-    // Compute BD.
-    double F  = TMath::Binomial(Nancestors(f), n) * TMath::Power(k, n) * TMath::Power((1-k), (Nancestors(f)-n));
-//    std::cout<<"1"<<"  ="<<TMath::Binomial(Nancestors(f), n)<<std::endl;
-//    std::cout<<"2"<<"  ="<<TMath::Power(k, n)<<std::endl;
-//    std::cout<<"3"<<"  ="<<TMath::Power((1-k), (Nancestors(f)-n))<<std::endl;
-    return F;
-} */
